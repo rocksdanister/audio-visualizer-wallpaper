@@ -1,0 +1,17 @@
+{
+  "AppVersion": "1.0.0.0",
+  "Title": "Audio Visualizer sample",
+  "Thumbnail": "a3zlq1yz.jpg",
+  "Preview": "ub3mqljo.gif",
+  "Desc": "Lively audio visualizer sample project",
+  "Author": "Dabjulmaros",
+  "License": "MIT",
+  "Contact": "https://github.com/rocksdanister/audio-visualizer-wallpaper",
+  "Type": 1,
+  "FileName": "index.html",
+  "Arguments": " --audio",
+  "IsAbsolutePath": false,
+  "Id": null,
+  "Tags": null,
+  "Version": 0
+}
