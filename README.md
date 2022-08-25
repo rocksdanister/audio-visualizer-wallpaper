@@ -1,4 +1,4 @@
-# audio-visualizer-wallpaper
+# Lively audio visualizer sample wallpaper
 <img src="/src/ub3mqljo.gif" />
 
 Visualizer wallpaper showcasing Lively Audio API (Require Lively v2.0.3.0 or above for optimal results.)
