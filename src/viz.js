@@ -2,22 +2,31 @@ let canvas = document.getElementById("canvas");
 let max_height, startPos, vizWidth, midY;
 
 let glob = { bloom: false, bloomRadius: 10 };
-let backgroundColor = "rgb(0,0,0)";
-let linesColor = "rgb(255,0,0)";
-let square = true;
-
+let backgroundColor = "rgb(20,20,20)";
+let linesColor = "rgb(250,250,250)";
+let square = false;
 let ctx = canvas.getContext("2d");
 let gradient;
+
+//If true = image else color
+let bg_choice = true;
+
+let img_background = new Image(1920, 1080);
+img_background.src = 'wallpapers\black.png';
+
+let horizontal_pos = 90;
+let vertical_pos = 10;
+let visualizer_length = 80;
+let line_thickness = 2;
 
 function setSize() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
-  max_height = window.innerHeight * 0.5;
-  startPos = window.innerWidth * 0.1;
-  vizWidth = window.innerWidth * 0.8;
-  midY = canvas.height - canvas.height / 4;
-
-  gradient = ctx.createLinearGradient(0,midY, 0, max_height);
+  max_height = window.innerHeight * 0.3;
+  startPos = window.innerWidth * (vertical_pos / 100);
+  vizWidth = window.innerWidth * (visualizer_length / 100);
+  midY = canvas.height * (horizontal_pos / 100);
+  gradient = ctx.createLinearGradient(0, midY, 0, max_height);
   gradient.addColorStop(0, backgroundColor);
   gradient.addColorStop(1, linesColor);
 
@@ -31,31 +40,51 @@ window.onresize = () => {
   setSize();
 };
 
-function livelyPropertyListener(name, val)
-{
-  switch(name) {
+function livelyPropertyListener(name, val) {
+  switch (name) {
     case "lineColor":
       var color = hexToRgb(val);
-      linesColor=`rgb(${color.r},${color.g},${color.b})`;
-      gradient = ctx.createLinearGradient(0,midY, 0, max_height);
+      linesColor = `rgb(${color.r},${color.g},${color.b})`;
+      gradient = ctx.createLinearGradient(0, midY, 0, max_height);
       gradient.addColorStop(0, backgroundColor);
       gradient.addColorStop(1, linesColor);
       break;
-  case "backgroundColor":
+    case "backgroundColor":
       var color = hexToRgb(val);
       backgroundColor = `rgb(${color.r},${color.g},${color.b})`;
-      gradient = ctx.createLinearGradient(0,midY, 0, max_height);
+      gradient = ctx.createLinearGradient(0, midY, 0, max_height);
       gradient.addColorStop(0, backgroundColor);
       gradient.addColorStop(1, linesColor);
-      break;   
+      break;
+    case "imgSelect":
+      img_background.src = val;
+      break;
+    case "bg_choice":
+      bg_choice = val;
+      break;
     case "square":
       square = val;
-      break;     
+      break;
+    case "horizontal_pos":
+      horizontal_pos = val;
+      midY = canvas.height * (val / 100);
+      break;
+    case "vertical_pos":
+      vertical_pos = val;
+      startPos = window.innerWidth * (vertical_pos / 100);
+      break;
+    case "visualizer_length":
+      visualizer_length = val;
+      vizWidth = window.innerWidth * (visualizer_length / 100);
+      break;
+    case "line_thickness":
+      line_thickness = val;
+      ctx.lineWidth = line_thickness;
+      break;
   }
 }
 
-function livelyAudioListener(audioArray) 
-{
+function livelyAudioListener(audioArray) {
   maxVal = 1;
   for (var x of audioArray) {
     if (x > maxVal) maxVal = x;
@@ -63,8 +92,13 @@ function livelyAudioListener(audioArray)
 
   const offSet = vizWidth / audioArray.length;
   const arrMid = audioArray.length / 2;
-  ctx.fillStyle = backgroundColor;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  if (bg_choice) {
+    ctx.drawImage(img_background, 0, 0, canvas.width, canvas.height);
+  } else {
+    ctx.fillStyle = backgroundColor;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
 
   ctx.beginPath();
   ctx.lineJoin = "round";
@@ -92,7 +126,7 @@ function livelyAudioListener(audioArray)
 }
 
 function renderLine(color) {
-  ctx.lineWidth = 2;
+  ctx.lineWidth = line_thickness;
   ctx.strokeStyle = color;
   if (glob.bloom) {
     ctx.shadowBlur = glob.bloomRadius;

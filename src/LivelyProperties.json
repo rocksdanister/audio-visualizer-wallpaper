@@ -2,16 +2,60 @@
   "lineColor": {
     "text": "Lines",
     "type": "color",
-    "value": "#FF0000"
+    "value": "#FAFAFA"
   },
   "backgroundColor": {
     "text": "Background",
     "type": "color",
-    "value": "#000000"
+    "value": "#141414"
+  },
+  "imgSelect": {
+    "type": "folderDropdown",
+    "value": "black.png",
+    "text": "Image",
+    "filter": "*.jpg|*.png",
+    "folder": "wallpapers"
+  },
+  "bg_choice": {
+    "type": "checkbox",
+    "value": true,
+    "text": "Image Background"
   },
   "square": {
     "type": "checkbox",
-    "value": true,
+    "value": false,
     "text": "Square"
+  },
+  "horizontal_pos": {
+    "max": 100,
+    "min": 0,
+    "tick": 1,
+    "text": "Horizontal Position",
+    "type": "slider",
+    "value": 90
+  }, 
+  "vertical_pos": {
+    "max": 100,
+    "min": 0,
+    "tick": 1,
+    "text": "Vertical Position",
+    "type": "slider",
+    "value": 10
+  }, 
+  "line_thickness": {
+    "max": 5,
+    "min": 1,
+    "tick": 1,
+    "text": "Line Thickness",
+    "type": "slider",
+    "value": 2
+  }, 
+  "visualizer_length": {
+    "max": 100,
+    "min": 20,
+    "tick": 1,
+    "text": "Visualizer Length",
+    "type": "slider",
+    "value": 80
   }
 }
