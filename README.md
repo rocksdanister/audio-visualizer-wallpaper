@@ -1,6 +1,4 @@
 # Lively Audio API Demo
-<img src="/src/ub3mqljo.gif" />
-
 Wallpapers that showcase [Lively Audio API.](https://github.com/rocksdanister/lively/wiki/Web-Guide-V-:-System-Data)
 
 Require [Lively Wallpaper](https://github.com/rocksdanister/lively) v2.0.3.0 or above.
