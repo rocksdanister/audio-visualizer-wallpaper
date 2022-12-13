@@ -1,0 +1,13 @@
+Source:
+https://github.com/rocksdanister/audio-visualizer-wallpaper
+
+License:
+MIT License
+Copyright (c) 2022 Rocksdanister
+
+Attributions:
+threejs example
+https://github.com/mrdoob/three.js/blob/master/examples/webgl_materials_car.html
+
+Ferrari 458 Italia model by vicent091036
+https://sketchfab.com/models/57bf6cc56931426e87494f554df1dab6

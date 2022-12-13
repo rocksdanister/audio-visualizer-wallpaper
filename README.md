@@ -1,10 +1,16 @@
-# Lively audio visualizer sample wallpaper
+# Lively Audio API Demo
 <img src="/src/ub3mqljo.gif" />
 
-Visualizer wallpaper showcasing Lively Audio API (Require Lively v2.0.3.0 or above for optimal results.)
+Wallpapers that showcase [Lively Audio API.](https://github.com/rocksdanister/lively/wiki/Web-Guide-V-:-System-Data)
 
-### DOWNLOAD
-https://github.com/rocksdanister/audio-visualizer-wallpaper/releases
+Require [Lively Wallpaper](https://github.com/rocksdanister/lively) v2.0.3.0 or above.
 
-### API DOCS:
-https://github.com/rocksdanister/lively/wiki/Web-Guide-V-:-System-Data
+## Simple visualizer
+<img src="/src/Simple visualizer/ub3mqljo.gif" width="600" height="338"/>
+
+[**Download**](https://github.com/rocksdanister/audio-visualizer-wallpaper/releases)
+
+## Ferrari 458
+<img src="/src/Ferrari 458/ub3mqljo.gif" width="600" height="338"/>
+
+[**Download**](https://github.com/rocksdanister/audio-visualizer-wallpaper/releases)

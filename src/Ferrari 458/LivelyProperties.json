@@ -1,0 +1,32 @@
+{
+  "bodyColor": {
+    "text": "Body",
+    "type": "color",
+    "value": "#ff0000"
+  },
+  "datailColor": {
+    "text": "Detail",
+    "type": "color",
+    "value": "#ffffff"
+  },
+  "floorColor": {
+    "text": "Floor",
+    "type": "color",
+    "value": "#333333"
+  },
+  "cameraConfig": {
+    "type": "dropdown",
+    "value": 0,
+    "text": "Camera",
+    "items": [
+      "Fixed",
+      "Rotate",
+      "Free"
+    ]
+  },
+  "30fps": {
+    "type": "checkbox",
+    "value": true,
+    "text": "30 FPS"
+  }
+}

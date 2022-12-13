@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>three.js webgl - materials - car</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+    <style>
+      body {
+        color: #bbbbbb;
+        background: #333333;
+        margin: 0;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="container"></div>
+
+    <!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="/js/es-module-shims.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "/js/threejs/three.module.js",
+          "three/addons/": "/js/threejs/jsm/"
+        }
+      }
+    </script>
+    <script type="text/javascript">
+      //Global variables
+      var fps = 60,
+        audioIntensity = 1;
+      var bodyMaterial, detailsMaterial, floorMaterial;
+      var cameraControl;
+    </script>
+    <script type="module">
+      import * as THREE from "three";
+
+      import Stats from "three/addons/libs/stats.module.js";
+
+      import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+      import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+      import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
+      import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
+
+      import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+      import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+      import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+
+      let camera, scene, renderer, composer;
+      //let stats;
+
+      let grid;
+
+      const headLightEmissiveIntensity = 5,
+        headLightBeamIntensity = 10;
+      let lightsMaterial, headLight1, headLight2;
+      const wheels = [];
+
+      function init() {
+        const container = document.getElementById("container");
+
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        //renderer.setAnimationLoop(render);
+        renderer.outputEncoding = THREE.sRGBEncoding;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 0.85;
+        container.appendChild(renderer.domElement);
+
+        composer = new EffectComposer(renderer);
+        window.addEventListener("resize", onWindowResize);
+
+        //stats = new Stats();
+        //container.appendChild(stats.dom);
+
+        camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(3.25, 2, -4.5);
+
+        cameraControl = new OrbitControls(camera, container);
+        cameraControl.enableDamping = true;
+        cameraControl.maxDistance = 9;
+        cameraControl.target.set(0, 0.5, 0);
+        cameraControl.update();
+
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x333333);
+        scene.environment = new RGBELoader().load("textures/venice_sunset_1k.hdr");
+        scene.environment.mapping = THREE.EquirectangularReflectionMapping;
+        scene.fog = new THREE.Fog(0x333333, 10, 15);
+
+        grid = new THREE.GridHelper(20, 40, 0xffffff, 0xffffff);
+        grid.material.opacity = 0.2;
+        grid.material.depthWrite = false;
+        grid.material.transparent = true;
+        scene.add(grid);
+
+        // materials
+
+        const glassMaterial = new THREE.MeshPhysicalMaterial({
+          color: 0xffffff,
+          metalness: 0.25,
+          roughness: 0,
+          transmission: 1.0,
+        });
+
+        bodyMaterial = new THREE.MeshPhysicalMaterial({
+          color: 0xff0000,
+          metalness: 1.0,
+          roughness: 0.5,
+          clearcoat: 1.0,
+          clearcoatRoughness: 0.03,
+          sheen: 0.5,
+        });
+
+        detailsMaterial = new THREE.MeshStandardMaterial({
+          color: 0xffffff,
+          metalness: 1.0,
+          roughness: 0.5,
+        });
+
+        lightsMaterial = new THREE.MeshStandardMaterial({
+          emissive: new THREE.Color(0xffffff),
+          emissiveIntensity: headLightEmissiveIntensity,
+        });
+
+        floorMaterial = new THREE.MeshStandardMaterial({
+          color: new THREE.Color(0x333333),
+        });
+
+        // Car
+
+        const shadow = new THREE.TextureLoader().load("models/ferrari_ao.png");
+
+        const dracoLoader = new DRACOLoader();
+        dracoLoader.setDecoderPath("js/draco/gltf/");
+
+        const loader = new GLTFLoader();
+        loader.setDRACOLoader(dracoLoader);
+
+        loader.load("models/ferrari.glb", function (gltf) {
+          // gltf.scene.traverse(function (child) {
+          //   console.log(child.name);
+          // });
+
+          const carModel = gltf.scene.children[0];
+          carModel.getObjectByName("body").material = bodyMaterial;
+
+          carModel.getObjectByName("rim_fl").material = detailsMaterial;
+          carModel.getObjectByName("rim_fr").material = detailsMaterial;
+          carModel.getObjectByName("rim_rr").material = detailsMaterial;
+          carModel.getObjectByName("rim_rl").material = detailsMaterial;
+          carModel.getObjectByName("trim").material = detailsMaterial;
+
+          carModel.getObjectByName("glass").material = glassMaterial;
+
+          //headlights glow
+
+          carModel.getObjectByName("lights").material = lightsMaterial;
+          carModel.getObjectByName("leds").material = lightsMaterial;
+
+          wheels.push(
+            carModel.getObjectByName("wheel_fl"),
+            carModel.getObjectByName("wheel_fr"),
+            carModel.getObjectByName("wheel_rl"),
+            carModel.getObjectByName("wheel_rr")
+          );
+
+          // ground plane
+
+          const planeGeometry = new THREE.PlaneGeometry(100, 100);
+          const plane = new THREE.Mesh(planeGeometry, floorMaterial);
+          plane.position.set(0, -0.01, -4);
+          plane.rotation.x = (Math.PI / 180) * -90;
+          scene.add(plane);
+
+          // shadow
+
+          const mesh = new THREE.Mesh(
+            new THREE.PlaneGeometry(0.655 * 4, 1.3 * 4),
+            new THREE.MeshBasicMaterial({
+              map: shadow,
+              blending: THREE.MultiplyBlending,
+              toneMapped: false,
+              transparent: true,
+            })
+          );
+          mesh.rotation.x = -Math.PI / 2;
+          mesh.renderOrder = 2;
+          carModel.add(mesh);
+          scene.add(carModel);
+        });
+
+        //headlights beam
+
+        headLight1 = new THREE.SpotLight(0x7d7d7d, 1, headLightBeamIntensity, THREE.MathUtils.degToRad(40), 0.25, 15);
+        headLight1.castShadow = true;
+        let lightTarget = new THREE.Object3D();
+        lightTarget.position.set(0, -50, -100);
+        scene.add(lightTarget);
+        headLight1.target = lightTarget;
+        headLight1.position.set(0.67, 0.62, -1.75);
+        scene.add(headLight1);
+
+        headLight2 = new THREE.SpotLight(0xffffff, 1, headLightBeamIntensity, THREE.MathUtils.degToRad(40), 0.25, 15);
+        headLight2.castShadow = true;
+        let lightTarget2 = new THREE.Object3D();
+        lightTarget2.position.set(0, -50, -100);
+        scene.add(lightTarget);
+        headLight2.target = lightTarget2;
+        headLight2.position.set(-0.7, 0.62, -1.75);
+        scene.add(headLight2);
+
+        const spotLightHelper = new THREE.SpotLightHelper(headLight2);
+        //scene.add( spotLightHelper );
+
+        //post processing
+
+        const renderPass = new RenderPass(scene, camera);
+        composer.addPass(renderPass);
+
+        const bloomPass = new UnrealBloomPass(new THREE.Vector2(256, 256), 1.5, 0.4, 0.85);
+        composer.addPass(bloomPass);
+      }
+
+      function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      }
+
+      function render() {
+        //fps control
+        setTimeout(function () {
+          requestAnimationFrame(render);
+        }, 1000 / fps);
+
+        cameraControl.update();
+
+        const time = -performance.now() / 1000;
+
+        for (let i = 0; i < wheels.length; i++) {
+          wheels[i].rotation.x = time * Math.PI * 2;
+        }
+
+        grid.position.z = -time % 1;
+        lightsMaterial.emissiveIntensity = headLightEmissiveIntensity * audioIntensity;
+        headLight1.intensity = headLight2.intensity = headLightBeamIntensity * audioIntensity;
+
+        composer.render();
+        //stats.update();
+      }
+
+      init();
+      render();
+    </script>
+    <script type="text/javascript">
+      function livelyPropertyListener(name, val) {
+        switch (name) {
+          case "bodyColor":
+            bodyMaterial.color.set(val);
+            break;
+          case "datailColor":
+            detailsMaterial.color.set(val);
+            break;
+          case "floorColor":
+            floorMaterial.color.set(val);
+            break;
+          case "cameraConfig":
+            switch (val) {
+              case 0: //fixed
+                cameraControl.autoRotate = false;
+                cameraControl.enabled = false;
+                break;
+              case 1: //rotate
+                cameraControl.autoRotate = true;
+                cameraControl.enabled = false;
+                break;
+              case 2: //free
+                cameraControl.autoRotate = false;
+                cameraControl.enabled = true;
+                break;
+            }
+            break;
+          case "30fps":
+            fps = val ? 30 : 60;
+            break;
+        }
+      }
+
+      var lastBass = 1;
+      function livelyAudioListener(audioArray) {
+        let bass = 0;
+        for (let i = 0; i <= 40; i++) bass += audioArray[i] * 2;
+        bass /= 40 * 2 * 0.1;
+        audioIntensity -= 0.1;
+        audioIntensity = (Math.floor(bass * 0.5 * 5) * 10) / 100;
+        if (audioIntensity > 1) audioIntensity = 1;
+        if (audioIntensity < 0) audioIntensity = 0;
+      }
+    </script>
+  </body>
+</html>
