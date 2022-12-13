@@ -10,7 +10,7 @@ Require [Lively Wallpaper](https://github.com/rocksdanister/lively) v2.0.3.0 or 
 
 [**Download**](https://github.com/rocksdanister/audio-visualizer-wallpaper/releases)
 
-## Ferrari 458
+## Ferrari 458 Italia
 <img src="/src/Ferrari 458/ub3mqljo.gif" width="600" height="338"/>
 
 [**Download**](https://github.com/rocksdanister/audio-visualizer-wallpaper/releases)
