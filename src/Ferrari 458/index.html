@@ -92,7 +92,7 @@
         scene.environment.mapping = THREE.EquirectangularReflectionMapping;
         scene.fog = new THREE.Fog(0x333333, 10, 15);
 
-        grid = new THREE.GridHelper(20, 40, 0xffffff, 0xffffff);
+        grid = new THREE.GridHelper(40, 80, 0xffffff, 0xffffff);
         grid.material.opacity = 0.2;
         grid.material.depthWrite = false;
         grid.material.transparent = true;
@@ -196,25 +196,25 @@
 
         //headlights beam
 
-        headLight1 = new THREE.SpotLight(0x7d7d7d, 1, headLightBeamIntensity, THREE.MathUtils.degToRad(40), 0.25, 15);
+        headLight1 = new THREE.SpotLight(0xffffff, headLightBeamIntensity, 4, THREE.MathUtils.degToRad(60), 0.25, 15);
         headLight1.castShadow = true;
-        let lightTarget = new THREE.Object3D();
-        lightTarget.position.set(0, -50, -100);
-        scene.add(lightTarget);
-        headLight1.target = lightTarget;
-        headLight1.position.set(0.67, 0.62, -1.75);
+        let lightTarget1 = new THREE.Object3D();
+        lightTarget1.position.set(0, -50, -100);
+        scene.add(lightTarget1);
+        headLight1.target = lightTarget1;
+        headLight1.position.set(0.67, 0.5, -2.1);
         scene.add(headLight1);
 
-        headLight2 = new THREE.SpotLight(0xffffff, 1, headLightBeamIntensity, THREE.MathUtils.degToRad(40), 0.25, 15);
+        headLight2 = new THREE.SpotLight(0xffffff, headLightBeamIntensity, 4, THREE.MathUtils.degToRad(60), 0.25, 15);
         headLight2.castShadow = true;
         let lightTarget2 = new THREE.Object3D();
         lightTarget2.position.set(0, -50, -100);
-        scene.add(lightTarget);
+        scene.add(lightTarget2);
         headLight2.target = lightTarget2;
-        headLight2.position.set(-0.7, 0.62, -1.75);
+        headLight2.position.set(-0.7, 0.5, -2.1);
         scene.add(headLight2);
 
-        const spotLightHelper = new THREE.SpotLightHelper(headLight2);
+        //const spotLightHelper = new THREE.SpotLightHelper(headLight1);
         //scene.add( spotLightHelper );
 
         //post processing
@@ -244,7 +244,7 @@
         const time = -performance.now() / 1000;
 
         for (let i = 0; i < wheels.length; i++) {
-          wheels[i].rotation.x = time * Math.PI * 2;
+          wheels[i].rotation.x = (time * Math.PI * 2)/2;
         }
 
         grid.position.z = -time % 1;
