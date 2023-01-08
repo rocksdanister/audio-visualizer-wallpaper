@@ -3,7 +3,10 @@
   <head>
     <title>three.js webgl - materials - car</title>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"
+    />
     <style>
       body {
         color: #bbbbbb;
@@ -18,12 +21,12 @@
 
     <!-- Import maps polyfill -->
     <!-- Remove this when import maps will be widely supported -->
-    <script async src="/js/es-module-shims.js"></script>
+    <script async src="./js/es-module-shims.js"></script>
     <script type="importmap">
       {
         "imports": {
-          "three": "/js/threejs/three.module.js",
-          "three/addons/": "/js/threejs/jsm/"
+          "three": "./js/threejs/three.module.js",
+          "three/addons/": "./js/threejs/jsm/"
         }
       }
     </script>
@@ -69,6 +72,7 @@
         renderer.outputEncoding = THREE.sRGBEncoding;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
         renderer.toneMappingExposure = 0.85;
+
         container.appendChild(renderer.domElement);
 
         composer = new EffectComposer(renderer);
@@ -77,7 +81,12 @@
         //stats = new Stats();
         //container.appendChild(stats.dom);
 
-        camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera = new THREE.PerspectiveCamera(
+          40,
+          window.innerWidth / window.innerHeight,
+          0.1,
+          100
+        );
         camera.position.set(3.25, 2, -4.5);
 
         cameraControl = new OrbitControls(camera, container);
@@ -88,11 +97,13 @@
 
         scene = new THREE.Scene();
         scene.background = new THREE.Color(0x333333);
-        scene.environment = new RGBELoader().load("textures/venice_sunset_1k.hdr");
+        scene.environment = new RGBELoader().load(
+          "./textures/venice_sunset_1k.hdr"
+        );
         scene.environment.mapping = THREE.EquirectangularReflectionMapping;
         scene.fog = new THREE.Fog(0x333333, 10, 15);
 
-        grid = new THREE.GridHelper(40, 80, 0xffffff, 0xffffff);
+        grid = new THREE.GridHelper(40, 80, 0xd7d7d7, 0xd7d7d7);
         grid.material.opacity = 0.2;
         grid.material.depthWrite = false;
         grid.material.transparent = true;
@@ -123,7 +134,7 @@
         });
 
         lightsMaterial = new THREE.MeshStandardMaterial({
-          emissive: new THREE.Color(0xffffff),
+          emissive: new THREE.Color(0xebebeb),
           emissiveIntensity: headLightEmissiveIntensity,
         });
 
@@ -133,15 +144,17 @@
 
         // Car
 
-        const shadow = new THREE.TextureLoader().load("models/ferrari_ao.png");
+        const shadow = new THREE.TextureLoader().load(
+          "./models/ferrari_ao.png"
+        );
 
         const dracoLoader = new DRACOLoader();
-        dracoLoader.setDecoderPath("js/draco/gltf/");
+        dracoLoader.setDecoderPath("./js/draco/gltf/");
 
         const loader = new GLTFLoader();
         loader.setDRACOLoader(dracoLoader);
 
-        loader.load("models/ferrari.glb", function (gltf) {
+        loader.load("./models/ferrari.glb", function (gltf) {
           // gltf.scene.traverse(function (child) {
           //   console.log(child.name);
           // });
@@ -175,6 +188,7 @@
           const plane = new THREE.Mesh(planeGeometry, floorMaterial);
           plane.position.set(0, -0.01, -4);
           plane.rotation.x = (Math.PI / 180) * -90;
+
           scene.add(plane);
 
           // shadow
@@ -191,38 +205,58 @@
           mesh.rotation.x = -Math.PI / 2;
           mesh.renderOrder = 2;
           carModel.add(mesh);
+          
           scene.add(carModel);
         });
 
         //headlights beam
 
-        headLight1 = new THREE.SpotLight(0xffffff, headLightBeamIntensity, 4, THREE.MathUtils.degToRad(60), 0.25, 15);
+        headLight1 = new THREE.SpotLight(
+          0xebebeb,
+          1,
+          headLightBeamIntensity,
+          THREE.MathUtils.degToRad(40),
+          0.25,
+          15
+        );
         headLight1.castShadow = true;
-        let lightTarget1 = new THREE.Object3D();
-        lightTarget1.position.set(0, -50, -100);
-        scene.add(lightTarget1);
-        headLight1.target = lightTarget1;
-        headLight1.position.set(0.67, 0.5, -2.1);
+        let lightTarget = new THREE.Object3D();
+        lightTarget.position.set(0, -50, -100);
+        scene.add(lightTarget);
+        headLight1.target = lightTarget;
+        headLight1.position.set(0.67, 0.7, -2.0);
         scene.add(headLight1);
 
-        headLight2 = new THREE.SpotLight(0xffffff, headLightBeamIntensity, 4, THREE.MathUtils.degToRad(60), 0.25, 15);
+        headLight2 = new THREE.SpotLight(
+          0xebebeb,
+          1,
+          headLightBeamIntensity,
+          THREE.MathUtils.degToRad(40),
+          0.25,
+          15
+        );
         headLight2.castShadow = true;
-        let lightTarget2 = new THREE.Object3D();
-        lightTarget2.position.set(0, -50, -100);
-        scene.add(lightTarget2);
-        headLight2.target = lightTarget2;
-        headLight2.position.set(-0.7, 0.5, -2.1);
+        // let lightTarget2 = new THREE.Object3D();
+        // lightTarget2.position.set(0, -50, -100);
+        // scene.add(lightTarget2);
+        headLight2.target = lightTarget;
+        headLight2.position.set(-0.7, 0.7, -2.0);
         scene.add(headLight2);
 
-        //const spotLightHelper = new THREE.SpotLightHelper(headLight1);
-        //scene.add( spotLightHelper );
+        // const spotLightHelper = new THREE.SpotLightHelper(headLight2);
+        // scene.add( spotLightHelper );
 
         //post processing
 
         const renderPass = new RenderPass(scene, camera);
         composer.addPass(renderPass);
 
-        const bloomPass = new UnrealBloomPass(new THREE.Vector2(256, 256), 1.5, 0.4, 0.85);
+        const bloomPass = new UnrealBloomPass(
+          new THREE.Vector2(256, 256),
+          1.5,
+          0.4,
+          0.85
+        );
         composer.addPass(bloomPass);
       }
 
@@ -244,12 +278,14 @@
         const time = -performance.now() / 1000;
 
         for (let i = 0; i < wheels.length; i++) {
-          wheels[i].rotation.x = (time * Math.PI * 2)/2;
+          wheels[i].rotation.x = (time * Math.PI * 2) / 2.5;
         }
 
         grid.position.z = -time % 1;
-        lightsMaterial.emissiveIntensity = headLightEmissiveIntensity * audioIntensity;
-        headLight1.intensity = headLight2.intensity = headLightBeamIntensity * audioIntensity;
+        lightsMaterial.emissiveIntensity =
+          headLightEmissiveIntensity * audioIntensity;
+        headLight1.intensity = headLight2.intensity =
+          headLightBeamIntensity * audioIntensity;
 
         composer.render();
         //stats.update();
