@@ -277,7 +277,13 @@
           albumTitle = obj.Artist;
 
           setNoSignal(songTitle == null && albumTitle == null);
-          albumImg.src = "data:image/png;base64, " + obj.Thumbnail;
+          if (obj.Thumbnail == null) {
+            ctxArtist.clearRect(0, 0, canvasArtist.width, canvasArtist.height);
+            albumColor = [63, 28, 8];
+            updateViz();
+          } else {
+            albumImg.src = "data:image/png;base64, " + obj.Thumbnail;
+          }
         }
       }
 
