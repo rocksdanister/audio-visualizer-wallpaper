@@ -1,0 +1,12 @@
+This project is MIT licensed
+Copyright (c) 2023 Rocksdanister
+Source:
+https://github.com/rocksdanister/audio-visualizer-wallpaper
+
+"Old TV" model by visualdiscette
+https://sketchfab.com/3d-models/old-tv-3fb1a4b9d14c44abaac69fec119bf251 
+licensed under CC-BY-4.0
+
+Colorful Studio
+https://polyhaven.com/a/colorful_studio
+licensed under CC0

@@ -1,0 +1,17 @@
+{
+  "AppVersion": "2.0.6.0",
+  "Title": "Music TV",
+  "Thumbnail": "natzsfzh.jpg",
+  "Preview": "vu4n1q4y.gif",
+  "Desc": "Retro tv that shows currently playing music with visualizer",
+  "Author": "rocksdanister",
+  "License": "MIT",
+  "Contact": "https://github.com/rocksdanister/audio-visualizer-wallpaper",
+  "Type": 1,
+  "FileName": "index.html",
+  "Arguments": "--audio --system-nowplaying",
+  "IsAbsolutePath": false,
+  "Id": null,
+  "Tags": null,
+  "Version": 0
+}

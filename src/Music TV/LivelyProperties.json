@@ -1,0 +1,31 @@
+{
+  "label1": {
+    "type": "label",
+    "value": "Camera"
+  },
+  "xAngleCamera": {
+    "max": 60,
+    "min": -60,
+    "step": 1,
+    "text": "Vertical",
+    "type": "slider",
+    "value": 0
+  },
+  "yAngleCamera": {
+    "max": 120,
+    "min": -120,
+    "step": 1,
+    "text": "Horizontal",
+    "type": "slider",
+    "value": 0
+  },
+  "label2": {
+    "type": "label",
+    "value": "Performance"
+  },
+  "30fps": {
+    "type": "checkbox",
+    "value": true,
+    "text": "30 Fps"
+  }
+}

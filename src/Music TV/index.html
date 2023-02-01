@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>three.js webgl</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+    <style>
+      @property --gradientColor1 {
+        syntax: "<color>";
+        initial-value: #2d2d2d;
+        inherits: false;
+      }
+
+      @property --gradientColor2 {
+        syntax: "<color>";
+        initial-value: #000000;
+        inherits: false;
+      }
+      body {
+        /* transition only works with css custom property */
+        background: radial-gradient(var(--gradientColor1), var(--gradientColor2));
+        transition: --gradientColor1 3s, --gradientColor2 3s;
+        margin: 0;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="container"></div>
+    <!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="/js/es-module-shims.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "/js/threejs/three.module.js",
+          "three/addons/": "/js/threejs/jsm/"
+        }
+      }
+    </script>
+    <script type="text/javascript">
+      //Global variables
+      var fps = 24;
+      var orbitalControl, cameraContainer;
+      //Using two separate canvas to simplify code
+      let canvasArtist = document.createElement("canvas");
+      let canvasVizualizer = document.createElement("canvas");
+      canvasArtist.width = canvasArtist.height = canvasVizualizer.width = canvasVizualizer.height = 300;
+    </script>
+    <script type="module">
+      import * as THREE from "three";
+
+      import Stats from "three/addons/libs/stats.module.js";
+
+      import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+      import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+      import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
+
+      import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+      import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+      import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+      import { FilmPass } from "three/addons/postprocessing/FilmPass.js";
+
+      let camera, scene, renderer, composer, canvasTexture, canvasTexture2;
+      //let stats;
+
+      function init() {
+        const container = document.getElementById("container");
+
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        //renderer.setAnimationLoop(render);
+        //renderer.setClearColor(0x000000, 0.0);
+
+        renderer.outputEncoding = THREE.sRGBEncoding;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 0.8;
+        container.appendChild(renderer.domElement);
+
+        composer = new EffectComposer(renderer);
+        window.addEventListener("resize", onWindowResize);
+
+        //stats = new Stats();
+        //container.appendChild(stats.dom);
+
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.25, 1000);
+        cameraContainer = new THREE.Object3D();
+        cameraContainer.add(camera);
+        //camera.position.set(0, 0,10);
+
+        orbitalControl = new OrbitControls(camera, container);
+        orbitalControl.enableDamping = true;
+        orbitalControl.minDistance = 10;
+        orbitalControl.maxDistance = 50;
+        orbitalControl.minAzimuthAngle = Math.PI * -0.5;
+        orbitalControl.maxAzimuthAngle = Math.PI * 0.5;
+        orbitalControl.target.set(0, 0, -0.1);
+        orbitalControl.enabled = false;
+        //cameraControl.autoRotate = true;
+        orbitalControl.update();
+
+        scene = new THREE.Scene();
+        //scene.background = new THREE.Color(0x000000);
+        //scene.background = new THREE.TextureLoader().load( "textures/background.png" );
+        scene.environment = new RGBELoader().load("textures/colorful_studio_1k.hdr");
+        scene.environment.mapping = THREE.EquirectangularReflectionMapping;
+
+        // TV
+        const loader = new GLTFLoader();
+        loader.load("models/screen.gltf", function (gltf) {
+          const planeGeometry = new THREE.PlaneGeometry(100, 100);
+          const plane = new THREE.Mesh(
+            planeGeometry,
+            new THREE.ShadowMaterial({
+              color: new THREE.Color(0x000000),
+            })
+          );
+          plane.receiveShadow = true;
+          plane.position.set(0, -5, -4);
+          plane.rotation.x = (Math.PI / 180) * -90;
+          scene.add(plane);
+
+          gltf.scene.scale.set(0.01, 0.01, 0.01);
+          gltf.scene.rotation.x = (Math.PI / 180) * -10;
+          gltf.scene.rotation.y = (Math.PI / 180) * -30;
+          gltf.scene.position.set(0.0, -5, -6);
+
+          gltf.scene.traverse(function (child) {
+            if (child.isMesh) child.castShadow = true;
+          });
+
+          canvasTexture = new THREE.CanvasTexture(canvasArtist);
+          canvasTexture.magFilter = THREE.NearestFilter;
+          canvasTexture.minFilter = THREE.NearestFilter;
+          canvasTexture.flipY = false;
+          const canvasMaterial = new THREE.MeshBasicMaterial({ map: canvasTexture, transparent: false });
+
+          canvasTexture2 = new THREE.CanvasTexture(canvasVizualizer);
+          canvasTexture2.magFilter = THREE.NearestFilter;
+          canvasTexture2.minFilter = THREE.NearestFilter;
+          canvasTexture2.flipY = false;
+          canvasTexture2.premultiplyAlpha = true;
+          const canvasMaterial2 = new THREE.MeshBasicMaterial({ map: canvasTexture2, transparent: true });
+
+          let screenArtist = gltf.scene.children[0].getObjectByName("SCREEN");
+          let screenVizualiser = screenArtist.clone(false);
+          screenArtist.getWorldPosition(screenVizualiser.position);
+          screenArtist.getWorldQuaternion(screenVizualiser.quaternion);
+          screenVizualiser.position.set(
+            screenVizualiser.position.x,
+            screenVizualiser.position.y,
+            screenVizualiser.position.z + 0.001
+          );
+
+          screenArtist.material = canvasMaterial;
+          screenVizualiser.material = canvasMaterial2;
+          scene.add(gltf.scene);
+          scene.add(screenVizualiser);
+        });
+
+        //lighting
+        const directionalLight = new THREE.SpotLight(0xffffff, 0.1);
+        directionalLight.position.set(-10, 75, 0);
+        directionalLight.castShadow = true;
+        scene.add(directionalLight);
+
+        //post processing
+        const renderPass = new RenderPass(scene, camera);
+        composer.addPass(renderPass);
+
+        //const filmPass = new FilmPass(1, 0.1, 1024, 0);
+        //composer.addPass(filmPass);
+
+        //const bloomPass = new UnrealBloomPass(new THREE.Vector2(256, 256), 2, 0.6, 0.85);
+        //composer.addPass(bloomPass);
+      }
+
+      function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      }
+
+      function render() {
+        //fps control
+        setTimeout(function () {
+          requestAnimationFrame(render);
+        }, 1000 / fps);
+
+        orbitalControl.update();
+
+        const time = -performance.now() / 1000;
+        if (canvasTexture != null) {
+          canvasTexture.needsUpdate = true;
+        }
+
+        if (canvasTexture2 != null) {
+          canvasTexture2.needsUpdate = true;
+        }
+
+        composer.render();
+        //stats.update();
+      }
+
+      init();
+      render();
+    </script>
+    <script src="js/color-thief.umd.js"></script>
+    <script type="text/javascript">
+      const colorThief = new ColorThief();
+      let ctxArtist = canvasArtist.getContext("2d");
+
+      let cameraX = 0,
+        cameraY = 0;
+      function livelyPropertyListener(name, val) {
+        switch (name) {
+          case "xAngleCamera":
+            cameraX = val;
+            if (cameraContainer != null) {
+              cameraContainer.rotation.x = (Math.PI / 180) * cameraX;
+            }
+            break;
+          case "yAngleCamera":
+            cameraY = val;
+            if (cameraContainer != null) {
+              cameraContainer.rotation.y = (Math.PI / 180) * cameraY;
+            }
+            break;
+          case "30fps":
+            fps = val ? 30 : 60;
+            break;
+        }
+      }
+
+      let songTitle = "Title",
+        albumTitle = "Album",
+        albumColor = [45, 45, 45];
+
+      function livelyCurrentTrack(data) {
+        let obj = JSON.parse(data);
+        if (obj.Title != songTitle && obj.Artist != albumTitle) {
+          songTitle = obj.Title;
+          albumTitle = obj.Artist;
+
+          albumImg.src =
+            songTitle == null && albumTitle == null
+              ? "textures/no_signal.gif"
+              : "data:image/png;base64, " + obj.Thumbnail;
+        }
+      }
+
+      let albumImg = new Image();
+      albumImg.onload = () => {
+        ctxArtist.clearRect(0, 0, canvasArtist.width, canvasArtist.height);
+
+        if (songTitle == null && albumTitle == null) {
+          ctxArtist.drawImage(albumImg, 0, 0, canvasArtist.width, canvasArtist.height);
+          document.body.style.setProperty("--gradientColor1", "#2d2d2d");
+        } else {
+          albumColor = colorThief.getColor(albumImg);
+          ctxArtist.textAlign = "center";
+          ctxArtist.font = songTitle.length > 20 ? "16px Arial, sans-serif" : "25px Arial, sans-serif";
+          ctxArtist.fillStyle = `rgb(${albumColor.toString()}`;
+          ctxArtist.fillText(songTitle, canvasArtist.width / 2, 125 + canvasArtist.height / 2);
+          ctxArtist.drawImage(albumImg, canvasArtist.width / 2 - 100, canvasArtist.height / 2 - 100, 200, 200);
+          //document.body.style.background = `radial-gradient(circle, rgba(${albumColor.toString()}, 1) 0%, rgba(0, 0, 0, 1) 100%)`;
+          document.body.style.setProperty("--gradientColor1", `rgb(${albumColor.toString()}`);
+          updateViz(); //update visualizer color
+        }
+      };
+
+      //visualizer
+      let ctxVisualizer = canvasVizualizer.getContext("2d");
+      let gradient, max_height, startPos, vizWidth, midY;
+
+      let glob = { bloom: false, bloomRadius: 10 };
+      let backgroundColor = "rgba(0,0,0,1)";
+      let linesColor = "rgb(255,255,255)";
+      let square = true;
+
+      function updateViz() {
+        //canvas2.width = window.innerWidth;
+        //canvas2.height = window.innerHeight;
+        max_height = canvasVizualizer.height * 0.5;
+        startPos = canvasVizualizer.width * 0.1;
+        vizWidth = canvasVizualizer.width * 0.8;
+        midY = canvasVizualizer.height - canvasVizualizer.height / 6;
+
+        gradient = ctxVisualizer.createLinearGradient(0, midY, 0, max_height);
+        gradient.addColorStop(0, backgroundColor);
+        gradient.addColorStop(0.5, `rgb(${albumColor.toString()}`);
+        gradient.addColorStop(1.0, linesColor);
+      }
+
+      window.onload = () => {
+        updateViz();
+        //livelyAudioListener([0]);
+      };
+
+      function livelyAudioListener(audioArray) {
+        if (songTitle == null && albumTitle == null) return;
+
+        maxVal = 1;
+        for (var x of audioArray) {
+          if (x > maxVal) maxVal = x;
+        }
+
+        const offSet = vizWidth / audioArray.length;
+        const arrMid = audioArray.length / 2;
+        //ctx.fillStyle = backgroundColor;
+        //ctx.fillRect(0, 0, canvas2.width, canvas2.height);
+        ctxVisualizer.clearRect(0, 0, canvasVizualizer.width, canvasVizualizer.height);
+
+        ctxVisualizer.beginPath();
+        ctxVisualizer.lineJoin = "round";
+        ctxVisualizer.moveTo(startPos - offSet * 3, midY);
+        ctxVisualizer.lineTo(startPos, midY);
+        let posInLine = -1;
+        for (var x = 0; x < audioArray.length; x++) {
+          posInLine++;
+          ctxVisualizer.lineTo(startPos + offSet * posInLine, midY - (audioArray[x] / maxVal) * max_height);
+          if (square)
+            ctxVisualizer.lineTo(startPos + offSet * (posInLine + 1), midY - (audioArray[x] / maxVal) * max_height);
+        }
+        ctxVisualizer.lineTo(startPos + offSet * (posInLine + (square ? 1 : 0)), midY);
+        ctxVisualizer.lineTo(startPos + offSet * (posInLine + (square ? 4 : 3)), midY);
+
+        ctxVisualizer.fillStyle = gradient;
+        ctxVisualizer.fill();
+      }
+    </script>
+  </body>
+</html>
