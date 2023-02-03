@@ -40,7 +40,7 @@
     </script>
     <script type="text/javascript">
       //Global variables
-      var fps = 24;
+      var fps = 30;
       var orbitalControl, cameraContainer;
 
       //Using two separate canvas to simplify code
@@ -266,23 +266,27 @@
         }
       }
 
-      let songTitle = "Title",
-        albumTitle = "Album",
+      let songTitle = "",
+        albumTitle = "",
         albumColor = [45, 45, 45];
 
       function livelyCurrentTrack(data) {
         let obj = JSON.parse(data);
-        if (obj.Title != songTitle && obj.Artist != albumTitle) {
-          songTitle = obj.Title;
-          albumTitle = obj.Artist;
+        if (obj == null) {
+          setSignalNotFound(true);
+        } else {
+          if (obj.Title != songTitle && obj.Artist != albumTitle) {
+            songTitle = obj.Title;
+            albumTitle = obj.Artist;
 
-          setNoSignal(songTitle == null && albumTitle == null);
-          if (obj.Thumbnail == null) {
-            ctxArtist.clearRect(0, 0, canvasArtist.width, canvasArtist.height);
-            albumColor = [63, 28, 8];
-            updateViz();
-          } else {
-            albumImg.src = "data:image/png;base64, " + obj.Thumbnail;
+            setSignalNotFound(false);
+            if (obj.Thumbnail == null) {
+              ctxArtist.clearRect(0, 0, canvasArtist.width, canvasArtist.height);
+              albumColor = [63, 28, 8];
+              updateViz();
+            } else {
+              albumImg.src = "data:image/png;base64, " + obj.Thumbnail;
+            }
           }
         }
       }
@@ -302,7 +306,7 @@
         updateViz(); //update visualizer color
       };
 
-      function setNoSignal(state) {
+      function setSignalNotFound(state) {
         if (state) {
           htmlVideo.play();
           htmlVideoScreen.visible = true;
