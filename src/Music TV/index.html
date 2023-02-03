@@ -41,19 +41,12 @@
     <script type="text/javascript">
       //Global variables
       var fps = 30;
-      var orbitalControl, cameraContainer;
+      var orbitalControl, cameraContainer, isSignalNotFound;
 
       //Using two separate canvas to simplify code
       let canvasArtist = document.createElement("canvas");
       let canvasVizualizer = document.createElement("canvas");
       canvasArtist.width = canvasArtist.height = canvasVizualizer.width = canvasVizualizer.height = 300;
-
-      // no signal video texture for threejs
-      let htmlVideoScreen;
-      let htmlVideo = document.createElement("video");
-      htmlVideo.src = `textures/no_signal.webm`;
-      htmlVideo.loop = true;
-      htmlVideo.play();
     </script>
     <script type="module">
       import * as THREE from "three";
@@ -70,8 +63,16 @@
       import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
       import { FilmPass } from "three/addons/postprocessing/FilmPass.js";
 
-      let camera, scene, renderer, composer, canvasTexture, canvasTexture2;
+      let camera, scene, renderer, composer;
+      let canvasTextureArtist, canvasTextureVisualizer;
       //let stats;
+
+      // isSignalNotFound video using threejs texture
+      let htmlVideoScreenObject;
+      let htmlVideo = document.createElement("video");
+      htmlVideo.src = `textures/no_signal.webm`;
+      htmlVideo.loop = true;
+      htmlVideo.play();
 
       function init() {
         const container = document.getElementById("container");
@@ -141,18 +142,19 @@
             if (child.isMesh) child.castShadow = true;
           });
 
-          canvasTexture = new THREE.CanvasTexture(canvasArtist);
-          canvasTexture.magFilter = THREE.NearestFilter;
-          canvasTexture.minFilter = THREE.NearestFilter;
-          canvasTexture.flipY = false;
-          const canvasMaterial = new THREE.MeshBasicMaterial({ map: canvasTexture, transparent: false });
+          canvasTextureArtist = new THREE.CanvasTexture(canvasArtist);
+          canvasTextureArtist.magFilter = THREE.NearestFilter;
+          canvasTextureArtist.minFilter = THREE.NearestFilter;
+          canvasTextureArtist.flipY = false;
+          const canvasMaterial = new THREE.MeshBasicMaterial({ map: canvasTextureArtist, transparent: false });
+          //canvasMaterial.map.offset.set(0, -0.12);
 
-          canvasTexture2 = new THREE.CanvasTexture(canvasVizualizer);
-          canvasTexture2.magFilter = THREE.NearestFilter;
-          canvasTexture2.minFilter = THREE.NearestFilter;
-          canvasTexture2.flipY = false;
-          canvasTexture2.premultiplyAlpha = true;
-          const canvasMaterial2 = new THREE.MeshBasicMaterial({ map: canvasTexture2, transparent: true });
+          canvasTextureVisualizer = new THREE.CanvasTexture(canvasVizualizer);
+          canvasTextureVisualizer.magFilter = THREE.NearestFilter;
+          canvasTextureVisualizer.minFilter = THREE.NearestFilter;
+          canvasTextureVisualizer.flipY = false;
+          canvasTextureVisualizer.premultiplyAlpha = true;
+          const canvasMaterial2 = new THREE.MeshBasicMaterial({ map: canvasTextureVisualizer, transparent: true });
 
           let screenArtist = gltf.scene.children[0].getObjectByName("SCREEN");
           let screenVizualiser = screenArtist.clone(false);
@@ -171,24 +173,24 @@
           videoTexture.maxFilter = THREE.NearestFilter;
           videoTexture.generateMipmaps = false;
           videoTexture.flipY = false;
-          var videoMaterial = new THREE.MeshBasicMaterial({ map: videoTexture });
+          var videoMaterial = new THREE.MeshBasicMaterial({ map: videoTexture, transparent: false });
           videoMaterial.map.offset.set(0, -0.12);
 
-          htmlVideoScreen = screenArtist.clone(false);
-          screenArtist.getWorldPosition(htmlVideoScreen.position);
-          screenArtist.getWorldQuaternion(htmlVideoScreen.quaternion);
-          htmlVideoScreen.position.set(
-            htmlVideoScreen.position.x,
-            htmlVideoScreen.position.y,
-            htmlVideoScreen.position.z + 0.002
+          htmlVideoScreenObject = screenArtist.clone(false);
+          screenArtist.getWorldPosition(htmlVideoScreenObject.position);
+          screenArtist.getWorldQuaternion(htmlVideoScreenObject.quaternion);
+          htmlVideoScreenObject.position.set(
+            htmlVideoScreenObject.position.x,
+            htmlVideoScreenObject.position.y,
+            htmlVideoScreenObject.position.z + 0.002
           );
 
           screenArtist.material = canvasMaterial;
           screenVizualiser.material = canvasMaterial2;
-          htmlVideoScreen.material = videoMaterial;
+          htmlVideoScreenObject.material = videoMaterial;
           scene.add(gltf.scene);
           scene.add(screenVizualiser);
-          scene.add(htmlVideoScreen);
+          scene.add(htmlVideoScreenObject);
         });
 
         //lighting
@@ -224,12 +226,22 @@
         orbitalControl.update();
 
         const time = -performance.now() / 1000;
-        if (canvasTexture != null) {
-          canvasTexture.needsUpdate = true;
+        if (canvasTextureArtist != null) {
+          canvasTextureArtist.needsUpdate = true;
         }
 
-        if (canvasTexture2 != null) {
-          canvasTexture2.needsUpdate = true;
+        if (canvasTextureVisualizer != null) {
+          canvasTextureVisualizer.needsUpdate = true;
+        }
+
+        if (htmlVideoScreenObject != null) {
+          if (isSignalNotFound) {
+            htmlVideo.play();
+            htmlVideoScreenObject.visible = true;
+          } else {
+            htmlVideo.pause();
+            htmlVideoScreenObject.visible = false;
+          }
         }
 
         composer.render();
@@ -268,21 +280,23 @@
 
       let songTitle = "",
         albumTitle = "",
-        albumColor = [45, 45, 45];
+        albumColor = [225, 225, 225];
 
       function livelyCurrentTrack(data) {
         let obj = JSON.parse(data);
         if (obj == null) {
-          setSignalNotFound(true);
+          isSignalNotFound = true;
+          document.body.style.setProperty("--gradientColor1", "#2d2d2d");
         } else {
           if (obj.Title != songTitle && obj.Artist != albumTitle) {
             songTitle = obj.Title;
             albumTitle = obj.Artist;
 
-            setSignalNotFound(false);
+            isSignalNotFound = false;
             if (obj.Thumbnail == null) {
               ctxArtist.clearRect(0, 0, canvasArtist.width, canvasArtist.height);
-              albumColor = [63, 28, 8];
+              document.body.style.setProperty("--gradientColor1", "#2d2d2d");
+              albumColor = [225, 225, 225];
               updateViz();
             } else {
               albumImg.src = "data:image/png;base64, " + obj.Thumbnail;
@@ -301,21 +315,9 @@
         ctxArtist.fillStyle = `rgb(${albumColor.toString()}`;
         ctxArtist.fillText(songTitle, canvasArtist.width / 2, 125 + canvasArtist.height / 2);
         ctxArtist.drawImage(albumImg, canvasArtist.width / 2 - 100, canvasArtist.height / 2 - 100, 200, 200);
-        //document.body.style.background = `radial-gradient(circle, rgba(${albumColor.toString()}, 1) 0%, rgba(0, 0, 0, 1) 100%)`;
         document.body.style.setProperty("--gradientColor1", `rgb(${albumColor.toString()}`);
         updateViz(); //update visualizer color
       };
-
-      function setSignalNotFound(state) {
-        if (state) {
-          htmlVideo.play();
-          htmlVideoScreen.visible = true;
-          document.body.style.setProperty("--gradientColor1", "#2d2d2d");
-        } else {
-          htmlVideo.pause();
-          htmlVideoScreen.visible = false;
-        }
-      }
 
       //visualizer
       let ctxVisualizer = canvasVizualizer.getContext("2d");

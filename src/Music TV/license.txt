@@ -10,3 +10,7 @@ licensed under CC-BY-4.0
 Colorful Studio
 https://polyhaven.com/a/colorful_studio
 licensed under CC0
+
+Color Thief
+https://github.com/lokesh/color-thief
+MIT license
