@@ -40,7 +40,7 @@
     </script>
     <script type="text/javascript">
       //Global variables
-      var fps = 30;
+      var fps = 30, useHighResModel = false;
       var orbitalControl, cameraContainer, isSignalNotFound;
 
       //Using two separate canvas to simplify code
@@ -71,6 +71,7 @@
       let htmlVideoScreenObject;
       let htmlVideo = document.createElement("video");
       htmlVideo.src = `textures/no_signal.webm`;
+      htmlVideo.muted = true;
       htmlVideo.loop = true;
       htmlVideo.play();
 
@@ -103,13 +104,13 @@
 
         orbitalControl = new OrbitControls(camera, container);
         orbitalControl.enableDamping = true;
-        orbitalControl.minDistance = 10;
+        orbitalControl.minDistance = 12.5;
         orbitalControl.maxDistance = 50;
         orbitalControl.minAzimuthAngle = Math.PI * -0.5;
         orbitalControl.maxAzimuthAngle = Math.PI * 0.5;
         orbitalControl.target.set(0, 0, -0.1);
         orbitalControl.enabled = false;
-        //cameraControl.autoRotate = true;
+        //orbitalControl.autoRotate = true;
         orbitalControl.update();
 
         scene = new THREE.Scene();
@@ -120,7 +121,7 @@
 
         // TV
         const loader = new GLTFLoader();
-        loader.load("models/screen.gltf", function (gltf) {
+        loader.load(useHighResModel ? "models/screen_high.glb" : "models/screen_low.glb", function (gltf) {
           const planeGeometry = new THREE.PlaneGeometry(100, 100);
           const plane = new THREE.Mesh(
             planeGeometry,
@@ -134,7 +135,7 @@
           scene.add(plane);
 
           gltf.scene.scale.set(0.01, 0.01, 0.01);
-          gltf.scene.rotation.x = (Math.PI / 180) * -10;
+          //gltf.scene.rotation.x = (Math.PI / 180) * -10;
           gltf.scene.rotation.y = (Math.PI / 180) * -30;
           gltf.scene.position.set(0.0, -5, -6);
 
