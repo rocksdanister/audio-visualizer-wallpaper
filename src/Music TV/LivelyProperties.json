@@ -9,7 +9,7 @@
     "step": 1,
     "text": "Vertical",
     "type": "slider",
-    "value": 0
+    "value": 10
   },
   "yAngleCamera": {
     "max": 120,

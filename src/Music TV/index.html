@@ -97,10 +97,10 @@
         //stats = new Stats();
         //container.appendChild(stats.dom);
 
-        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.25, 1000);
+        camera = new THREE.PerspectiveCamera(52.5, window.innerWidth / window.innerHeight, 0.25, 1000);
         cameraContainer = new THREE.Object3D();
         cameraContainer.add(camera);
-        //camera.position.set(0, 0,10);
+        cameraContainer.rotation.x = (Math.PI / 180) * 10;
 
         orbitalControl = new OrbitControls(camera, container);
         orbitalControl.enableDamping = true;
