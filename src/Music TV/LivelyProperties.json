@@ -19,6 +19,14 @@
     "type": "slider",
     "value": 0
   },
+  "zoomCamera": {
+    "max": 10,
+    "min": -10,
+    "step": 0.1,
+    "text": "Zoom",
+    "type": "slider",
+    "value": 0
+  },
   "label2": {
     "type": "label",
     "value": "Performance"

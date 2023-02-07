@@ -40,7 +40,8 @@
     </script>
     <script type="text/javascript">
       //Global variables
-      var fps = 30, useHighResModel = false;
+      var fps = 30,
+        useHighResModel = false;
       var orbitalControl, cameraContainer, isSignalNotFound;
 
       //Using two separate canvas to simplify code
@@ -147,7 +148,7 @@
           canvasTextureArtist.magFilter = THREE.NearestFilter;
           canvasTextureArtist.minFilter = THREE.NearestFilter;
           canvasTextureArtist.flipY = false;
-          const canvasMaterial = new THREE.MeshBasicMaterial({ map: canvasTextureArtist, transparent: false });
+          const canvasMaterialArtist = new THREE.MeshBasicMaterial({ map: canvasTextureArtist, transparent: false });
           //canvasMaterial.map.offset.set(0, -0.12);
 
           canvasTextureVisualizer = new THREE.CanvasTexture(canvasVizualizer);
@@ -155,7 +156,7 @@
           canvasTextureVisualizer.minFilter = THREE.NearestFilter;
           canvasTextureVisualizer.flipY = false;
           canvasTextureVisualizer.premultiplyAlpha = true;
-          const canvasMaterial2 = new THREE.MeshBasicMaterial({ map: canvasTextureVisualizer, transparent: true });
+          const canvasMaterialVisualizer = new THREE.MeshBasicMaterial({ map: canvasTextureVisualizer, transparent: true });
 
           let screenArtist = gltf.scene.children[0].getObjectByName("SCREEN");
           let screenVizualiser = screenArtist.clone(false);
@@ -186,8 +187,8 @@
             htmlVideoScreenObject.position.z + 0.002
           );
 
-          screenArtist.material = canvasMaterial;
-          screenVizualiser.material = canvasMaterial2;
+          screenArtist.material = canvasMaterialArtist;
+          screenVizualiser.material = canvasMaterialVisualizer;
           htmlVideoScreenObject.material = videoMaterial;
           scene.add(gltf.scene);
           scene.add(screenVizualiser);
@@ -257,20 +258,21 @@
       const colorThief = new ColorThief();
       let ctxArtist = canvasArtist.getContext("2d");
 
-      let cameraX = 0,
-        cameraY = 0;
       function livelyPropertyListener(name, val) {
         switch (name) {
           case "xAngleCamera":
-            cameraX = val;
             if (cameraContainer != null) {
-              cameraContainer.rotation.x = (Math.PI / 180) * cameraX;
+              cameraContainer.rotation.x = (Math.PI / 180) * val;
             }
             break;
           case "yAngleCamera":
-            cameraY = val;
             if (cameraContainer != null) {
-              cameraContainer.rotation.y = (Math.PI / 180) * cameraY;
+              cameraContainer.rotation.y = (Math.PI / 180) * val;
+            }
+            break;
+          case "zoomCamera":
+            if (cameraContainer != null) {
+              cameraContainer.position.z = val;
             }
             break;
           case "30fps":
@@ -280,7 +282,7 @@
       }
 
       let songTitle = "",
-        albumTitle = "",
+        songArtist = "",
         albumColor = [225, 225, 225];
 
       function livelyCurrentTrack(data) {
@@ -289,9 +291,9 @@
           isSignalNotFound = true;
           document.body.style.setProperty("--gradientColor1", "#2d2d2d");
         } else {
-          if (obj.Title != songTitle && obj.Artist != albumTitle) {
+          if (obj.Title != songTitle && obj.Artist != songArtist) {
             songTitle = obj.Title;
-            albumTitle = obj.Artist;
+            songArtist = obj.Artist;
 
             isSignalNotFound = false;
             if (obj.Thumbnail == null) {
@@ -349,7 +351,7 @@
       };
 
       function livelyAudioListener(audioArray) {
-        if (songTitle == null && albumTitle == null) return;
+        if (songTitle == null && songArtist == null) return;
 
         maxVal = 1;
         for (var x of audioArray) {
