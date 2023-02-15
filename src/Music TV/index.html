@@ -156,7 +156,10 @@
           canvasTextureVisualizer.minFilter = THREE.NearestFilter;
           canvasTextureVisualizer.flipY = false;
           canvasTextureVisualizer.premultiplyAlpha = true;
-          const canvasMaterialVisualizer = new THREE.MeshBasicMaterial({ map: canvasTextureVisualizer, transparent: true });
+          const canvasMaterialVisualizer = new THREE.MeshBasicMaterial({
+            map: canvasTextureVisualizer,
+            transparent: true,
+          });
 
           let screenArtist = gltf.scene.children[0].getObjectByName("SCREEN");
           let screenVizualiser = screenArtist.clone(false);
@@ -291,19 +294,21 @@
           isSignalNotFound = true;
           document.body.style.setProperty("--gradientColor1", "#2d2d2d");
         } else {
-          if (obj.Title != songTitle && obj.Artist != songArtist) {
-            songTitle = obj.Title;
-            songArtist = obj.Artist;
+          songTitle = obj.Title;
+          songArtist = obj.Artist;
 
-            isSignalNotFound = false;
-            if (obj.Thumbnail == null) {
-              ctxArtist.clearRect(0, 0, canvasArtist.width, canvasArtist.height);
-              document.body.style.setProperty("--gradientColor1", "#2d2d2d");
-              albumColor = [225, 225, 225];
-              updateViz();
-            } else {
-              albumImg.src = "data:image/png;base64, " + obj.Thumbnail;
-            }
+          isSignalNotFound = false;
+          if (obj.Thumbnail == null) {
+            ctxArtist.clearRect(0, 0, canvasArtist.width, canvasArtist.height);
+            document.body.style.setProperty("--gradientColor1", "#2d2d2d");
+            ctxArtist.textAlign = "center";
+            ctxArtist.font = songTitle.length > 20 ? "16px Arial, sans-serif" : "25px Arial, sans-serif";
+            ctxArtist.fillStyle = `rgb(225,225,225)`;
+            ctxArtist.fillText(songTitle, canvasArtist.width / 2, 125 + canvasArtist.height / 2);
+            albumColor = [225, 225, 225];
+            updateViz();
+          } else {
+            albumImg.src = "data:image/png;base64, " + obj.Thumbnail;
           }
         }
       }
@@ -351,7 +356,7 @@
       };
 
       function livelyAudioListener(audioArray) {
-        if (songTitle == null && songArtist == null) return;
+        if (isSignalNotFound) return;
 
         maxVal = 1;
         for (var x of audioArray) {
