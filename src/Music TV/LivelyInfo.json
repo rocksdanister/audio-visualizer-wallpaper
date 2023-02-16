@@ -1,9 +1,9 @@
 {
   "AppVersion": "2.0.6.0",
-  "Title": "Music TV",
+  "Title": "Music TV (LQ)",
   "Thumbnail": "5hhxt0u4.jpg",
   "Preview": "2mlhvoxr.gif",
-  "Desc": "Retro tv that shows currently playing music with visualizer",
+  "Desc": "TV that shows currently playing music",
   "Author": "rocksdanister",
   "License": "MIT",
   "Contact": "https://github.com/rocksdanister/audio-visualizer-wallpaper",
