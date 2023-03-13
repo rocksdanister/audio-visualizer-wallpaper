@@ -1,0 +1,17 @@
+{
+  "AppVersion": "1.0.0.0",
+  "Title": "Simple Media",
+  "Thumbnail": "roa1541k.jpg",
+  "Preview": "txlls5dg.gif",
+  "Desc": "Visualizer, music and cursor follow in one",
+  "Author": "rocksdanisters",
+  "License": "see license.txt",
+  "Contact": "https://github.com/rocksdanister",
+  "Type": 1,
+  "FileName": "index.html",
+  "Arguments": "--system-nowplaying --audio",
+  "IsAbsolutePath": false,
+  "Id": null,
+  "Tags": null,
+  "Version": 0
+}
