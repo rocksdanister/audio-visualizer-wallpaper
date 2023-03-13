@@ -1,9 +1,9 @@
 {
   "AppVersion": "1.0.0.0",
-  "Title": "Simple Media",
+  "Title": "Media Parallax",
   "Thumbnail": "roa1541k.jpg",
   "Preview": "txlls5dg.gif",
-  "Desc": "Visualizer, music and cursor follow in one",
+  "Desc": "Visualizer, music and mouse parallax in one",
   "Author": "rocksdanisters",
   "License": "see license.txt",
   "Contact": "https://github.com/rocksdanister",

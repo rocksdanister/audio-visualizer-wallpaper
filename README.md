@@ -3,10 +3,10 @@ Wallpapers that showcase [Lively API.](https://github.com/rocksdanister/lively/w
 
 | Name               | Preview                                                       | Description                                           |
 | ------------------ | ------------------------------------------------------------- | ----------------------------------------------------- |
-| Simple visualizer  | <img src="/src/Simple visualizer/ub3mqljo.gif" width="300" /> | Simple audio visualizer that reacts to music          |
+| Simple Visualizer  | <img src="/src/Simple visualizer/ub3mqljo.gif" width="300" /> | Simple audio visualizer that reacts to music          |
 | Ferrari 458 Italia | <img src="/src/Ferrari 458/ub3mqljo.gif" width="300" />       | Car with headlight that reacts to music bass          |
 | Music TV           | <img src="/src/Music TV/2mlhvoxr.gif" width="300"/>           | TV that shows currently playing music with visualizer |
-| Simple Media       | <img src="/src/Simple Media/txlls5dg.gif" width="300"/>       | Visualizer, music and cursor follow in one            | 
+| Media Parallax     | <img src="/src/Media Parallax/txlls5dg.gif" width="300"/>     | Visualizer, music and mouse parallax in one           | 
 
 ### [Download](https://github.com/rocksdanister/audio-visualizer-wallpaper/releases)
 Require [Lively Wallpaper](https://github.com/rocksdanister/lively) v2.0.6.0 or above.
