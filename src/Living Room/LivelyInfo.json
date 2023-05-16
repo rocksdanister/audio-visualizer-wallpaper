@@ -1,0 +1,17 @@
+{
+  "AppVersion": "2.0.6.0",
+  "Title": "Living Room",
+  "Thumbnail": "5hhxt0u4.jpg",
+  "Preview": "2mlhvoxr.gif",
+  "Desc": "Isometric blender model",
+  "Author": "rocksdanister",
+  "License": "MIT",
+  "Contact": "https://github.com/rocksdanister/audio-visualizer-wallpaper",
+  "Type": 1,
+  "FileName": "index.html",
+  "Arguments": "--system-nowplaying",
+  "IsAbsolutePath": false,
+  "Id": null,
+  "Tags": null,
+  "Version": 0
+}

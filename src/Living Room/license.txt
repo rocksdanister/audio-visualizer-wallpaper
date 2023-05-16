@@ -1,0 +1,6 @@
+This project is MIT licensed
+Copyright (c) 2023 Rocksdanister
+Source:
+https://github.com/rocksdanister/audio-visualizer-wallpaper
+
+TODO

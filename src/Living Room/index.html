@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Isometric Room</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+    <style>
+      @property --gradientColor1 {
+        syntax: "<color>";
+        initial-value: #2d2d2d;
+        inherits: false;
+      }
+
+      @property --gradientColor2 {
+        syntax: "<color>";
+        initial-value: #000000;
+        inherits: false;
+      }
+      body {
+        /* transition only works with css custom property */
+        background: radial-gradient(var(--gradientColor1), var(--gradientColor2));
+        transition: --gradientColor1 3s, --gradientColor2 3s;
+        margin: 0;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="container"></div>
+    <!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="/js/es-module-shims.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "/js/threejs/three.module.js",
+          "three/addons/": "/js/threejs/jsm/"
+        }
+      }
+    </script>
+    <script type="text/javascript">
+      //Global variables
+      var fps = 24;
+      var orbitalControl,
+        cameraContainer,
+        isSignalNotFound = true;
+
+      //Using two separate canvas to simplify code
+      let canvasArtist = document.createElement("canvas");
+      let canvasClock = document.createElement("canvas");
+      let canvasPhoto = document.createElement("canvas");
+      canvasArtist.width = canvasArtist.height = canvasPhoto.height = canvasPhoto.width = 300;
+      canvasClock.width = canvasClock.height = 300;
+    </script>
+    <script type="module">
+      import * as THREE from "three";
+
+      import Stats from "three/addons/libs/stats.module.js";
+
+      import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+      import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+      import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
+
+      import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+      import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+      import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+      import { FilmPass } from "three/addons/postprocessing/FilmPass.js";
+
+      let camera, scene, renderer, composer;
+      let canvasTextureArtist, canvasTextureClock, canvasTexturePhoto;
+      //let stats;
+
+      // isSignalNotFound video using threejs texture
+      let htmlVideoScreenObject;
+      let htmlVideo = document.createElement("video");
+      htmlVideo.src = `textures/no_signal.webm`;
+      htmlVideo.muted = true;
+      htmlVideo.loop = true;
+      htmlVideo.play();
+
+      //orthographic camera params
+      const frustumSize = 20, resizeWidth = false;
+
+      function init() {
+        const container = document.getElementById("container");
+
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        //renderer.setAnimationLoop(render);
+        //renderer.setClearColor(0x000000, 0.0);
+
+        renderer.outputEncoding = THREE.sRGBEncoding;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 2.5;
+        container.appendChild(renderer.domElement);
+
+        composer = new EffectComposer(renderer);
+        window.addEventListener("resize", onWindowResize);
+
+        //stats = new Stats();
+        //container.appendChild(stats.dom);
+
+        //camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.25, 1000);
+        if (resizeWidth) {
+          let aspect = window.innerHeight / window.innerWidth;
+          camera = new THREE.OrthographicCamera(
+            frustumSize / -2,
+            frustumSize / 2,
+            (frustumSize * aspect) / 2,
+            (frustumSize * aspect) / -2,
+            0.25,
+            1000
+          );
+        } else {
+          let aspect = window.innerWidth / window.innerHeight;
+          camera = new THREE.OrthographicCamera(
+            (-aspect * frustumSize) / 2,
+            (aspect * frustumSize) / 2,
+            frustumSize / 2,
+            -frustumSize / 2,
+            0.25,
+            1000
+          );
+        }
+        cameraContainer = new THREE.Object3D();
+        cameraContainer.add(camera);
+        cameraContainer.rotation.x = (Math.PI / 180) * -30;
+        cameraContainer.rotation.y = (Math.PI / 180) * 30;
+
+        orbitalControl = new OrbitControls(camera, container);
+        orbitalControl.enableDamping = true;
+        orbitalControl.minDistance = 18;
+        orbitalControl.maxDistance = 50;
+        orbitalControl.minAzimuthAngle = Math.PI * -0.5;
+        orbitalControl.maxAzimuthAngle = Math.PI * 0.5;
+        orbitalControl.target.set(0, 0, -0.1);
+        orbitalControl.enabled = false;
+        //orbitalControl.autoRotate = true;
+        orbitalControl.update();
+
+        scene = new THREE.Scene();
+        //scene.background = new THREE.Color(0x000000);
+        //scene.background = new THREE.TextureLoader().load( "textures/background.png" );
+        //scene.environment = new RGBELoader().load("textures/colorful_studio_1k.hdr");
+        //scene.environment.mapping = THREE.EquirectangularReflectionMapping;
+
+        // TV
+        const loader = new GLTFLoader();
+        loader.load("models/Room 2.1.glb", function (gltf) {
+          const planeGeometry = new THREE.PlaneGeometry(100, 100);
+          const plane = new THREE.Mesh(
+            planeGeometry,
+            new THREE.ShadowMaterial({
+              color: new THREE.Color(0x000000),
+            })
+          );
+          plane.receiveShadow = true;
+          plane.position.set(0, -5, -4);
+          plane.rotation.x = (Math.PI / 180) * -90;
+          //scene.add(plane);
+
+          //gltf.scene.scale.set(0.01, 0.01, 0.01);
+          //gltf.scene.rotation.x = (Math.PI / 180) * 30;
+          //gltf.scene.rotation.y = (Math.PI / 180) * 60;
+          //gltf.scene.rotation.z = (Math.PI / 180) * 60;
+          //gltf.scene.position.set(0.0, -5, -6);
+
+          gltf.scene.traverse(function (child) {
+            if (child.isMesh) child.castShadow = true;
+            //console.log(child);
+          });
+
+          canvasTextureArtist = new THREE.CanvasTexture(canvasArtist);
+          //canvasTextureArtist.magFilter = THREE.NearestFilter;
+          //canvasTextureArtist.minFilter = THREE.NearestFilter;
+          canvasTextureArtist.flipY = false;
+          const canvasMaterialArtist = new THREE.MeshBasicMaterial({ map: canvasTextureArtist, transparent: false });
+
+          canvasTexturePhoto = new THREE.CanvasTexture(canvasPhoto);
+          //canvasTexturePhoto.magFilter = THREE.NearestFilter;
+          //canvasTexturePhoto.minFilter = THREE.NearestFilter;
+          canvasTexturePhoto.flipY = false;
+          const canvasMaterialPhoto = new THREE.MeshBasicMaterial({ map: canvasTexturePhoto, transparent: false });
+
+          canvasTextureClock = new THREE.CanvasTexture(canvasClock);
+          canvasTextureClock.magFilter = THREE.NearestFilter;
+          canvasTextureClock.minFilter = THREE.NearestFilter;
+          canvasTextureClock.flipY = false;
+          const canvasMaterialClock = new THREE.MeshBasicMaterial({ map: canvasTextureClock, transparent: false });
+
+          //model objects
+          let screenArtist = gltf.scene.children[0].getObjectByName("TV_SCREEN");
+          let screenClock = gltf.scene.children[2].getObjectByName("CLOCK_SCREEN");
+          let screenPhoto = gltf.scene.children[1].getObjectByName("PICTURE_FRAME");
+          screenPhoto.visible = false;
+
+          //no signal video
+          let videoTexture = new THREE.VideoTexture(htmlVideo);
+          videoTexture.format = THREE.RGBAFormat;
+          videoTexture.minFilter = THREE.NearestFilter;
+          videoTexture.maxFilter = THREE.NearestFilter;
+          videoTexture.generateMipmaps = false;
+          videoTexture.flipY = false;
+          var videoMaterial = new THREE.MeshBasicMaterial({ map: videoTexture, transparent: false });
+
+          htmlVideoScreenObject = screenArtist.clone(false);
+          screenArtist.getWorldPosition(htmlVideoScreenObject.position);
+          screenArtist.getWorldQuaternion(htmlVideoScreenObject.quaternion);
+          htmlVideoScreenObject.position.set(
+            htmlVideoScreenObject.position.x,
+            htmlVideoScreenObject.position.y,
+            htmlVideoScreenObject.position.z + 0.002
+          );
+
+          screenArtist.material = canvasMaterialArtist;
+          screenClock.material = canvasMaterialClock;
+          screenPhoto.material = canvasMaterialPhoto;
+          htmlVideoScreenObject.material = videoMaterial;
+          scene.add(gltf.scene);
+          scene.add(htmlVideoScreenObject);
+        });
+
+        //lighting
+        const directionalLight = new THREE.SpotLight(0xffffff, 0.1);
+        directionalLight.position.set(-10, 75, 0);
+        directionalLight.castShadow = true;
+        scene.add(directionalLight);
+
+        //post processing
+        const renderPass = new RenderPass(scene, camera);
+        composer.addPass(renderPass);
+
+        //const filmPass = new FilmPass(1, 0.1, 1024, 0);
+        //composer.addPass(filmPass);
+
+        //const bloomPass = new UnrealBloomPass(new THREE.Vector2(256, 256), 2, 0.6, 0.85);
+        //composer.addPass(bloomPass);
+      }
+
+      function onWindowResize() {
+        if (resizeWidth) {
+          let aspect = window.innerHeight / window.innerWidth;
+          camera.left = frustumSize / -2;
+          camera.right = frustumSize / 2;
+          camera.top = (frustumSize * aspect) / 2;
+          camera.bottom = (-frustumSize * aspect) / 2;
+          camera.updateProjectionMatrix();
+          renderer.setSize(window.innerWidth, window.innerHeight);
+        } else {
+          let aspect = window.innerWidth / window.innerHeight;
+          camera.left = (-aspect * frustumSize) / 2;
+          camera.right = (aspect * frustumSize) / 2;
+          camera.top = frustumSize / 2;
+          camera.bottom = -frustumSize / 2;
+          camera.updateProjectionMatrix();
+          renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+      }
+
+      function render() {
+        //fps control
+        setTimeout(function () {
+          requestAnimationFrame(render);
+        }, 1000 / fps);
+
+        orbitalControl.update();
+
+        const time = -performance.now() / 1000;
+        if (canvasTextureArtist != null) {
+          canvasTextureArtist.needsUpdate = true;
+        }
+
+        if (canvasTextureClock != null) {
+          canvasTextureClock.needsUpdate = true;
+        }
+
+        if (htmlVideoScreenObject != null) {
+          if (isSignalNotFound) {
+            htmlVideo.play();
+            htmlVideoScreenObject.visible = true;
+          } else {
+            htmlVideo.pause();
+            htmlVideoScreenObject.visible = false;
+          }
+        }
+
+        composer.render();
+        //stats.update();
+      }
+
+      init();
+      render();
+    </script>
+    <script src="js/color-thief.umd.js"></script>
+    <script type="text/javascript">
+      const colorThief = new ColorThief();
+      let ctxArtist = canvasArtist.getContext("2d");
+
+      function livelyPropertyListener(name, val) {
+        return;
+
+        switch (name) {
+          case "xAngleCamera":
+            if (cameraContainer != null) {
+              cameraContainer.rotation.x = (Math.PI / 180) * val;
+            }
+            break;
+          case "yAngleCamera":
+            if (cameraContainer != null) {
+              cameraContainer.rotation.y = (Math.PI / 180) * val;
+            }
+            break;
+          case "zoomCamera":
+            if (cameraContainer != null) {
+              cameraContainer.position.z = val;
+            }
+            break;
+          case "30fps":
+            fps = val ? 24 : 60;
+            break;
+        }
+      }
+
+      window.onload = () => {
+        //isSignalNotFound = true;
+      };
+
+      let songTitle = "",
+        songArtist = "",
+        albumColor = [225, 225, 225];
+
+      function livelyCurrentTrack(data) {
+        let obj = JSON.parse(data);
+        if (obj == null) {
+          isSignalNotFound = true;
+          document.body.style.setProperty("--gradientColor1", "#2d2d2d");
+        } else {
+          songTitle = obj.Title;
+          songArtist = obj.Artist;
+
+          isSignalNotFound = false;
+          if (obj.Thumbnail == null) {
+            ctxArtist.clearRect(0, 0, canvasArtist.width, canvasArtist.height);
+            document.body.style.setProperty("--gradientColor1", "#2d2d2d");
+            ctxArtist.textAlign = "center";
+            ctxArtist.font = songTitle.length > 20 ? "16px Arial, sans-serif" : "25px Arial, sans-serif";
+            ctxArtist.fillStyle = `rgb(225,225,225)`;
+            ctxArtist.fillText(songTitle, canvasArtist.width / 2, 125 + canvasArtist.height / 2);
+            albumColor = [225, 225, 225];
+          } else {
+            albumImg.src = "data:image/png;base64, " + obj.Thumbnail;
+          }
+        }
+      }
+
+      let albumImg = new Image();
+      albumImg.onload = () => {
+        ctxArtist.clearRect(0, 0, canvasArtist.width, canvasArtist.height);
+
+        albumColor = colorThief.getColor(albumImg);
+        ctxArtist.drawImage(albumImg, 0, 0, canvasArtist.width, canvasArtist.height);
+        /* ctxArtist.textAlign = "center";
+        ctxArtist.font = songTitle.length > 20 ? "16px Arial, sans-serif" : "25px Arial, sans-serif";
+        ctxArtist.fillStyle = `rgb(${albumColor.toString()}`;
+        ctxArtist.fillText(songTitle, canvasArtist.width / 2, 125 + canvasArtist.height / 2); */
+        document.body.style.setProperty("--gradientColor1", `rgb(${albumColor.toString()}`);
+      };
+
+      //https://techfunda.com/howto/1077/digital-clock-animation
+      let ctxClock = canvasClock.getContext("2d");
+      function updateClock() {
+        let date = new Date();
+        let str = getTime(date.getHours(), date.getMinutes(), date.getSeconds());
+
+        ctxClock.clearRect(0, 0, canvasClock.width, canvasClock.height);
+        ctxClock.font = "120px Arial, sans-serif";
+        ctxClock.fillStyle = "white";
+        ctxClock.fillText(str, 0, canvasClock.height / 1.5);
+      }
+
+      function getTime(hour, min, sec) {
+        var curTime;
+        if (hour < 10) curTime = "0" + hour.toString();
+        else curTime = hour.toString();
+
+        if (min < 10) curTime += ":0" + min.toString();
+        else curTime += ":" + min.toString();
+
+        /* if (sec < 10) curTime += ":0" + sec.toString();
+        else curTime += ":" + sec.toString(); */
+        return curTime;
+      }
+      setInterval(updateClock, 1000);
+    </script>
+  </body>
+</html>
