@@ -9,7 +9,7 @@
     "step": 1,
     "text": "Vertical",
     "type": "slider",
-    "value": 10
+    "value": -30
   },
   "yAngleCamera": {
     "max": 120,
@@ -17,15 +17,7 @@
     "step": 1,
     "text": "Horizontal",
     "type": "slider",
-    "value": 0
-  },
-  "zoomCamera": {
-    "max": 10,
-    "min": -10,
-    "step": 0.1,
-    "text": "Zoom",
-    "type": "slider",
-    "value": 0
+    "value": 30
   },
   "label2": {
     "type": "label",

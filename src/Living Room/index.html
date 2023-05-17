@@ -4,28 +4,11 @@
     <title>Isometric Room</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
-    <style>
-      @property --gradientColor1 {
-        syntax: "<color>";
-        initial-value: #2d2d2d;
-        inherits: false;
-      }
-
-      @property --gradientColor2 {
-        syntax: "<color>";
-        initial-value: #000000;
-        inherits: false;
-      }
-      body {
-        /* transition only works with css custom property */
-        background: radial-gradient(var(--gradientColor1), var(--gradientColor2));
-        transition: --gradientColor1 3s, --gradientColor2 3s;
-        margin: 0;
-      }
-    </style>
+    <link rel="stylesheet" href="styles/style.css" />
   </head>
 
   <body>
+    <div id="loader"></div>
     <div id="container"></div>
     <!-- Import maps polyfill -->
     <!-- Remove this when import maps will be widely supported -->
@@ -43,13 +26,17 @@
       var fps = 24;
       var orbitalControl,
         cameraContainer,
-        isSignalNotFound = true;
+        isSignalNotFound = true,
+        isDebugging = true;
 
       //Using two separate canvas to simplify code
       let canvasArtist = document.createElement("canvas");
       let canvasClock = document.createElement("canvas");
       let canvasPhoto = document.createElement("canvas");
-      canvasArtist.width = canvasArtist.height = canvasPhoto.height = canvasPhoto.width = 300;
+      canvasArtist.width = 640;
+      canvasArtist.height = 360;
+      canvasPhoto.width = 360;
+      canvasPhoto.height = 640;
       canvasClock.width = canvasClock.height = 300;
     </script>
     <script type="module">
@@ -61,6 +48,8 @@
 
       import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
       import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
+
+      // import { RectAreaLightUniformsLib } from "three/addons/lights/RectAreaLightUniformsLib.js";
 
       import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
       import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
@@ -80,7 +69,8 @@
       htmlVideo.play();
 
       //orthographic camera params
-      const frustumSize = 20, resizeWidth = false;
+      const frustumSize = 20,
+        resizeWidth = false;
 
       function init() {
         const container = document.getElementById("container");
@@ -95,7 +85,7 @@
 
         renderer.outputEncoding = THREE.sRGBEncoding;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 2.5;
+        //renderer.toneMappingExposure = 2.5;
         container.appendChild(renderer.domElement);
 
         composer = new EffectComposer(renderer);
@@ -128,6 +118,7 @@
         }
         cameraContainer = new THREE.Object3D();
         cameraContainer.add(camera);
+        //cameraContainer.position.set(0, 0, 0);
         cameraContainer.rotation.x = (Math.PI / 180) * -30;
         cameraContainer.rotation.y = (Math.PI / 180) * 30;
 
@@ -138,11 +129,12 @@
         orbitalControl.minAzimuthAngle = Math.PI * -0.5;
         orbitalControl.maxAzimuthAngle = Math.PI * 0.5;
         orbitalControl.target.set(0, 0, -0.1);
-        orbitalControl.enabled = false;
+        orbitalControl.enabled = isDebugging;
         //orbitalControl.autoRotate = true;
         orbitalControl.update();
 
         scene = new THREE.Scene();
+        //RectAreaLightUniformsLib.init();
         //scene.background = new THREE.Color(0x000000);
         //scene.background = new THREE.TextureLoader().load( "textures/background.png" );
         //scene.environment = new RGBELoader().load("textures/colorful_studio_1k.hdr");
@@ -163,11 +155,7 @@
           plane.rotation.x = (Math.PI / 180) * -90;
           //scene.add(plane);
 
-          //gltf.scene.scale.set(0.01, 0.01, 0.01);
-          //gltf.scene.rotation.x = (Math.PI / 180) * 30;
-          //gltf.scene.rotation.y = (Math.PI / 180) * 60;
-          //gltf.scene.rotation.z = (Math.PI / 180) * 60;
-          //gltf.scene.position.set(0.0, -5, -6);
+          gltf.scene.position.set(0, -2.5, 0);
 
           gltf.scene.traverse(function (child) {
             if (child.isMesh) child.castShadow = true;
@@ -196,7 +184,6 @@
           let screenArtist = gltf.scene.children[0].getObjectByName("TV_SCREEN");
           let screenClock = gltf.scene.children[2].getObjectByName("CLOCK_SCREEN");
           let screenPhoto = gltf.scene.children[1].getObjectByName("PICTURE_FRAME");
-          screenPhoto.visible = false;
 
           //no signal video
           let videoTexture = new THREE.VideoTexture(htmlVideo);
@@ -222,13 +209,19 @@
           htmlVideoScreenObject.material = videoMaterial;
           scene.add(gltf.scene);
           scene.add(htmlVideoScreenObject);
+
+          showScene();
         });
 
-        //lighting
-        const directionalLight = new THREE.SpotLight(0xffffff, 0.1);
-        directionalLight.position.set(-10, 75, 0);
-        directionalLight.castShadow = true;
-        scene.add(directionalLight);
+        const light = new THREE.PointLight(0xff0000, 50, 4);
+        light.position.set(0, 1.25, -3.75);
+        //light.lookAt( 0, 0, 0 );
+        scene.add(light);
+
+        // const directionalLight = new THREE.SpotLight(0xffffff, 0.1);
+        // directionalLight.position.set(-10, 75, 0);
+        // directionalLight.castShadow = true;
+        // scene.add(directionalLight);
 
         //post processing
         const renderPass = new RenderPass(scene, camera);
@@ -237,7 +230,7 @@
         //const filmPass = new FilmPass(1, 0.1, 1024, 0);
         //composer.addPass(filmPass);
 
-        //const bloomPass = new UnrealBloomPass(new THREE.Vector2(256, 256), 2, 0.6, 0.85);
+        //const bloomPass = new UnrealBloomPass(new THREE.Vector2(256, 256), 1, 0.2, 0.8);
         //composer.addPass(bloomPass);
       }
 
@@ -278,6 +271,10 @@
           canvasTextureClock.needsUpdate = true;
         }
 
+        if (canvasTexturePhoto != null) {
+          canvasTexturePhoto.needsUpdate = true;
+        }
+
         if (htmlVideoScreenObject != null) {
           if (isSignalNotFound) {
             htmlVideo.play();
@@ -292,6 +289,11 @@
         //stats.update();
       }
 
+      function showScene() {
+        document.getElementById("loader").style.visibility = "collapse";
+        document.getElementById("container").classList.toggle("fadeIn");
+      }
+
       init();
       render();
     </script>
@@ -299,10 +301,12 @@
     <script type="text/javascript">
       const colorThief = new ColorThief();
       let ctxArtist = canvasArtist.getContext("2d");
+      let ctxPhoto = canvasPhoto.getContext("2d");
+
+      let albumImg = new Image();
+      let photoImg = new Image();
 
       function livelyPropertyListener(name, val) {
-        return;
-
         switch (name) {
           case "xAngleCamera":
             if (cameraContainer != null) {
@@ -314,11 +318,6 @@
               cameraContainer.rotation.y = (Math.PI / 180) * val;
             }
             break;
-          case "zoomCamera":
-            if (cameraContainer != null) {
-              cameraContainer.position.z = val;
-            }
-            break;
           case "30fps":
             fps = val ? 24 : 60;
             break;
@@ -326,8 +325,32 @@
       }
 
       window.onload = () => {
-        //isSignalNotFound = true;
+        //test
+        //photoImg.src = "photos//mountain.jpg";
+        photoImg.src = "photos//pexels-flo-dahm-699466.jpg";
+        //photoImg.src = "photos//jellyfish.jpg";
       };
+
+      photoImg.onload = () => {
+        let scaleX = 1,
+          scaleY = 1;
+        let canvasAspect = canvasPhoto.width / canvasPhoto.height;
+        let imgAspect = photoImg.width / photoImg.height;
+        if (imgAspect > canvasAspect) scaleX = canvasAspect / imgAspect;
+        else scaleY = imgAspect / canvasAspect;
+
+        //console.log(imgAspect + " " +  canvasAspect + " " +scaleX + "/" + scaleY);
+        ctxPhoto.clearRect(0, 0, canvasPhoto.width, canvasPhoto.height);
+        drawImage(ctxPhoto, photoImg, canvasPhoto.width / 2, canvasPhoto.height / 2, scaleX, scaleY, -90);
+      };
+
+      //ref: https://stackoverflow.com/questions/17411991/html5-canvas-rotate-image
+      // x,y position of image center
+      function drawImage(ctx, image, x, y, scaleX, scaleY, degree) {
+        ctx.setTransform(scaleX, 0, 0, scaleY, x, y);
+        ctx.rotate((degree * Math.PI) / 180);
+        ctx.drawImage(image, -image.width / 2, -image.height / 2);
+      }
 
       let songTitle = "",
         songArtist = "",
@@ -357,7 +380,6 @@
         }
       }
 
-      let albumImg = new Image();
       albumImg.onload = () => {
         ctxArtist.clearRect(0, 0, canvasArtist.width, canvasArtist.height);
 
@@ -377,7 +399,7 @@
         let str = getTime(date.getHours(), date.getMinutes(), date.getSeconds());
 
         ctxClock.clearRect(0, 0, canvasClock.width, canvasClock.height);
-        ctxClock.font = "120px Arial, sans-serif";
+        ctxClock.font = "115px Arial, sans-serif";
         ctxClock.fillStyle = "white";
         ctxClock.fillText(str, 0, canvasClock.height / 1.5);
       }
