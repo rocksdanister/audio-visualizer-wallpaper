@@ -1,18 +1,10 @@
 {
-  "label0": {
-    "type": "label",
-    "value": "Room"
-  },
   "imgSelect": {
     "type": "folderDropdown",
     "value": "jellyfish.jpg",
     "text": "Picture Frame",
     "filter": "*.jpg|*.png",
     "folder": "photos"
-  },
-  "label1": {
-    "type": "label",
-    "value": "Camera"
   },
   "xAngleCamera": {
     "max": 60,
@@ -29,10 +21,6 @@
     "text": "Horizontal",
     "type": "slider",
     "value": 30
-  },
-  "label2": {
-    "type": "label",
-    "value": "Performance"
   },
   "30fps": {
     "type": "checkbox",

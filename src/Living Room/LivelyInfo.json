@@ -9,7 +9,7 @@
   "Contact": "https://github.com/rocksdanister/audio-visualizer-wallpaper",
   "Type": 1,
   "FileName": "index.html",
-  "Arguments": "--system-nowplaying",
+  "Arguments": "--system-nowplaying --audio",
   "IsAbsolutePath": false,
   "Id": null,
   "Tags": null,
