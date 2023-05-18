@@ -1,4 +1,15 @@
 {
+  "label0": {
+    "type": "label",
+    "value": "Room"
+  },
+  "imgSelect": {
+    "type": "folderDropdown",
+    "value": "jellyfish.jpg",
+    "text": "Picture Frame",
+    "filter": "*.jpg|*.png",
+    "folder": "photos"
+  },
   "label1": {
     "type": "label",
     "value": "Camera"

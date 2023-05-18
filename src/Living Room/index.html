@@ -25,6 +25,8 @@
       //Global variables
       var fps = 24;
       var orbitalControl,
+        musicLight,
+        musicLightIntensity = 50,
         cameraContainer,
         isSignalNotFound = true,
         isDebugging = true;
@@ -56,6 +58,7 @@
       import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
       import { FilmPass } from "three/addons/postprocessing/FilmPass.js";
 
+      //let musicLight;
       let camera, scene, renderer, composer;
       let canvasTextureArtist, canvasTextureClock, canvasTexturePhoto;
       //let stats;
@@ -85,7 +88,7 @@
 
         renderer.outputEncoding = THREE.sRGBEncoding;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        //renderer.toneMappingExposure = 2.5;
+        //renderer.toneMappingExposure = 1;
         container.appendChild(renderer.domElement);
 
         composer = new EffectComposer(renderer);
@@ -133,57 +136,94 @@
         //orbitalControl.autoRotate = true;
         orbitalControl.update();
 
+        //Lighting and environment
         scene = new THREE.Scene();
         //RectAreaLightUniformsLib.init();
         //scene.background = new THREE.Color(0x000000);
         //scene.background = new THREE.TextureLoader().load( "textures/background.png" );
         //scene.environment = new RGBELoader().load("textures/colorful_studio_1k.hdr");
-        //scene.environment.mapping = THREE.EquirectangularReflectionMapping;
+        scene.environment = new RGBELoader().load("textures/cave_wall_1k.hdr");
+        scene.environment.mapping = THREE.EquirectangularReflectionMapping;
 
-        // TV
+        musicLight = new THREE.PointLight(0xff0000, musicLightIntensity, 4);
+        musicLight.position.set(0, 1.25, -3.75);
+        //light.lookAt( 0, 0, 0 );
+        scene.add(musicLight);
+
+        //sun
+        const directionalLight = new THREE.SpotLight(0xffffff, 1);
+        directionalLight.position.set(-10, 75, 0);
+        directionalLight.castShadow = true;
+        scene.add(directionalLight);
+
+        let roomLight = new THREE.PointLight(0xcecca7, 4, 8);
+        roomLight.position.set(-3.5, 2, 1.5);
+        roomLight.castShadow = true;
+        scene.add(roomLight);
+        //const pointLightHelper = new THREE.PointLightHelper(roomLight, 1);
+        //scene.add(pointLightHelper);
+
+        //Photo frame light
+        // const spotLight = new THREE.SpotLight(0xffffff, 4, 10, (Math.PI / 180) * 15, 0, 4);
+        // spotLight.castShadow = true;
+        // spotLight.position.set(-4, 3.4, -0.75);
+        // const targetObject = new THREE.Object3D();
+        // scene.add(targetObject);
+        // targetObject.position.set(-4, 0, -0.75);
+        // spotLight.target = targetObject;
+        // scene.add(spotLight);
+        //const spotLightHelper = new THREE.SpotLightHelper(spotLight);
+        //scene.add(spotLightHelper);
+
+        //Load model
         const loader = new GLTFLoader();
         loader.load("models/Room 2.1.glb", function (gltf) {
-          const planeGeometry = new THREE.PlaneGeometry(100, 100);
-          const plane = new THREE.Mesh(
-            planeGeometry,
-            new THREE.ShadowMaterial({
-              color: new THREE.Color(0x000000),
-            })
-          );
-          plane.receiveShadow = true;
-          plane.position.set(0, -5, -4);
-          plane.rotation.x = (Math.PI / 180) * -90;
-          //scene.add(plane);
+          // const planeGeometry = new THREE.PlaneGeometry(10, 10);
+          // const bottomPlane = new THREE.Mesh(
+          //   planeGeometry,
+          //   new THREE.ShadowMaterial({
+          //     // color: new THREE.Color(0x000000),
+          //   })
+          // );
+          // bottomPlane.receiveShadow = true;
+          // bottomPlane.position.set(0, -2.5, 0);
+          // bottomPlane.rotation.x = (Math.PI / 180) * -90;
+          // scene.add(bottomPlane);
 
           gltf.scene.position.set(0, -2.5, 0);
 
           gltf.scene.traverse(function (child) {
             if (child.isMesh) child.castShadow = true;
-            //console.log(child);
+            console.log(child);
           });
 
           canvasTextureArtist = new THREE.CanvasTexture(canvasArtist);
-          //canvasTextureArtist.magFilter = THREE.NearestFilter;
-          //canvasTextureArtist.minFilter = THREE.NearestFilter;
+          canvasTextureArtist.encoding = THREE.sRGBEncoding;
           canvasTextureArtist.flipY = false;
           const canvasMaterialArtist = new THREE.MeshBasicMaterial({ map: canvasTextureArtist, transparent: false });
 
           canvasTexturePhoto = new THREE.CanvasTexture(canvasPhoto);
-          //canvasTexturePhoto.magFilter = THREE.NearestFilter;
-          //canvasTexturePhoto.minFilter = THREE.NearestFilter;
+          canvasTexturePhoto.encoding = THREE.sRGBEncoding;
           canvasTexturePhoto.flipY = false;
           const canvasMaterialPhoto = new THREE.MeshBasicMaterial({ map: canvasTexturePhoto, transparent: false });
 
           canvasTextureClock = new THREE.CanvasTexture(canvasClock);
-          canvasTextureClock.magFilter = THREE.NearestFilter;
-          canvasTextureClock.minFilter = THREE.NearestFilter;
           canvasTextureClock.flipY = false;
+          canvasTextureClock.anisotropy = 4;
           const canvasMaterialClock = new THREE.MeshBasicMaterial({ map: canvasTextureClock, transparent: false });
 
           //model objects
-          let screenArtist = gltf.scene.children[0].getObjectByName("TV_SCREEN");
-          let screenClock = gltf.scene.children[2].getObjectByName("CLOCK_SCREEN");
-          let screenPhoto = gltf.scene.children[1].getObjectByName("PICTURE_FRAME");
+          let screenArtist = gltf.scene.getObjectByName("TV_SCREEN");
+          let screenClock = gltf.scene.getObjectByName("CLOCK_SCREEN");
+          let screenPhoto = gltf.scene.getObjectByName("PICTURE_FRAME");
+          console.log(screenPhoto.material);
+
+          //Baked texture is MeshBasic otherwise (no real-time lighting.)
+          meshBasicToStandardMesh(gltf.scene.getObjectByName("Room"));
+          meshBasicToStandardMesh(gltf.scene.getObjectByName("Tv_Cabinet"));
+          meshBasicToStandardMesh(gltf.scene.getObjectByName("Cube003")); //table2
+          meshBasicToStandardMesh(gltf.scene.getObjectByName("1001")); //guitar
+          meshBasicToStandardMesh(gltf.scene.getObjectByName("1")); //plant
 
           //no signal video
           let videoTexture = new THREE.VideoTexture(htmlVideo);
@@ -213,16 +253,6 @@
           showScene();
         });
 
-        const light = new THREE.PointLight(0xff0000, 50, 4);
-        light.position.set(0, 1.25, -3.75);
-        //light.lookAt( 0, 0, 0 );
-        scene.add(light);
-
-        // const directionalLight = new THREE.SpotLight(0xffffff, 0.1);
-        // directionalLight.position.set(-10, 75, 0);
-        // directionalLight.castShadow = true;
-        // scene.add(directionalLight);
-
         //post processing
         const renderPass = new RenderPass(scene, camera);
         composer.addPass(renderPass);
@@ -232,6 +262,15 @@
 
         //const bloomPass = new UnrealBloomPass(new THREE.Vector2(256, 256), 1, 0.2, 0.8);
         //composer.addPass(bloomPass);
+      }
+
+      function meshBasicToStandardMesh(object) {
+        let oldMat = object.material;
+        let newMat = new THREE.MeshStandardMaterial();
+        //THREE.MeshStandardMaterial.prototype.copy.call( newMat, oldMat );
+        //newMat.copy(oldMat);
+        newMat.map = oldMat.map;
+        object.material = newMat;
       }
 
       function onWindowResize() {
@@ -289,13 +328,14 @@
         //stats.update();
       }
 
+      init();
+      render();
+
+      //helpers
       function showScene() {
         document.getElementById("loader").style.visibility = "collapse";
         document.getElementById("container").classList.toggle("fadeIn");
       }
-
-      init();
-      render();
     </script>
     <script src="js/color-thief.umd.js"></script>
     <script type="text/javascript">
@@ -308,6 +348,11 @@
 
       function livelyPropertyListener(name, val) {
         switch (name) {
+          case "imgSelect":
+            {
+              photoImg.src = val;
+            }
+            break;
           case "xAngleCamera":
             if (cameraContainer != null) {
               cameraContainer.rotation.x = (Math.PI / 180) * val;
@@ -325,10 +370,9 @@
       }
 
       window.onload = () => {
-        //test
-        //photoImg.src = "photos//mountain.jpg";
-        photoImg.src = "photos//pexels-flo-dahm-699466.jpg";
-        //photoImg.src = "photos//jellyfish.jpg";
+        if (isDebugging) {
+          photoImg.src = "photos//jellyfish.jpg";
+        }
       };
 
       photoImg.onload = () => {
@@ -341,6 +385,7 @@
 
         //console.log(imgAspect + " " +  canvasAspect + " " +scaleX + "/" + scaleY);
         ctxPhoto.clearRect(0, 0, canvasPhoto.width, canvasPhoto.height);
+        ctxPhoto.filter = "brightness(90%)";
         drawImage(ctxPhoto, photoImg, canvasPhoto.width / 2, canvasPhoto.height / 2, scaleX, scaleY, -90);
       };
 
@@ -380,6 +425,22 @@
         }
       }
 
+      var lastBass = 1;
+      function livelyAudioListener(audioArray) {
+        let bass = 0,
+          audioIntensity = 1;
+        for (let i = 0; i <= 40; i++) bass += audioArray[i] * 2;
+        bass /= 40 * 2 * 0.1;
+        audioIntensity -= 0.1;
+        audioIntensity = (Math.floor(bass * 0.5 * 5) * 10) / 100;
+        if (audioIntensity > 1) audioIntensity = 1;
+        if (audioIntensity < 0) audioIntensity = 0;
+
+        musicLight.intensity = musicLightIntensity * audioIntensity;
+        //lightsMaterial.emissiveIntensity = headLightEmissiveIntensity * audioIntensity;
+        //headLight1.intensity = headLight2.intensity = headLightBeamIntensity * audioIntensity;
+      }
+
       albumImg.onload = () => {
         ctxArtist.clearRect(0, 0, canvasArtist.width, canvasArtist.height);
 
@@ -390,6 +451,9 @@
         ctxArtist.fillStyle = `rgb(${albumColor.toString()}`;
         ctxArtist.fillText(songTitle, canvasArtist.width / 2, 125 + canvasArtist.height / 2); */
         document.body.style.setProperty("--gradientColor1", `rgb(${albumColor.toString()}`);
+        //audioLight = rgbToHex(albumColor[0], albumColor[1], albumColor[2]);
+        musicLight.color.setRGB(albumColor[0] / 255, albumColor[1] / 255, albumColor[2] / 255);
+        console.log(albumColor);
       };
 
       //https://techfunda.com/howto/1077/digital-clock-animation
@@ -399,9 +463,9 @@
         let str = getTime(date.getHours(), date.getMinutes(), date.getSeconds());
 
         ctxClock.clearRect(0, 0, canvasClock.width, canvasClock.height);
-        ctxClock.font = "115px Arial, sans-serif";
+        ctxClock.font = "110px Arial, sans-serif";
         ctxClock.fillStyle = "white";
-        ctxClock.fillText(str, 0, canvasClock.height / 1.5);
+        ctxClock.fillText(str, 10, canvasClock.height / 1.5);
       }
 
       function getTime(hour, min, sec) {
