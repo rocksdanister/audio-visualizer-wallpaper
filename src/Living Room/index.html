@@ -209,6 +209,8 @@
 
           canvasTextureClock = new THREE.CanvasTexture(canvasClock);
           canvasTextureClock.flipY = false;
+          //canvasTextureClock.magFilter = THREE.NearestFilter;
+          //canvasTextureClock.minFilter = THREE.NearestFilter;
           canvasTextureClock.anisotropy = 4;
           const canvasMaterialClock = new THREE.MeshBasicMaterial({ map: canvasTextureClock, transparent: false });
 
@@ -342,9 +344,16 @@
       const colorThief = new ColorThief();
       let ctxArtist = canvasArtist.getContext("2d");
       let ctxPhoto = canvasPhoto.getContext("2d");
-
       let albumImg = new Image();
       let photoImg = new Image();
+
+      //ref: https://stackoverflow.com/questions/2756575/drawing-text-to-canvas-with-font-face-does-not-work-at-the-first-time
+      var newFont = new FontFace("digib", "url(./fonts/DS-DIGIB.TTF)", {
+        weight: "normal",
+      });
+      newFont.load().then(function (font) {
+        document.fonts.add(font);
+      });
 
       function livelyPropertyListener(name, val) {
         switch (name) {
@@ -453,7 +462,7 @@
         ctxArtist.drawImage(albumImg, 0, 0, canvasArtist.width, canvasArtist.height);
         ctxArtist.filter = "none";
         ctxArtist.drawImage(albumImg, canvasArtist.width / 2 - 150, canvasArtist.height / 2 - 150, 300, 300);
-        
+
         musicLight.color.setRGB(albumColor[0] / 255, albumColor[1] / 255, albumColor[2] / 255);
         document.body.style.setProperty("--gradientColor1", `rgb(${albumColor.toString()}`);
       };
@@ -465,7 +474,7 @@
         let str = getTime(date.getHours(), date.getMinutes(), date.getSeconds());
 
         ctxClock.clearRect(0, 0, canvasClock.width, canvasClock.height);
-        ctxClock.font = "110px Arial, sans-serif";
+        ctxClock.font = "125px digib";
         ctxClock.fillStyle = "white";
         ctxClock.fillText(str, 10, canvasClock.height / 1.5);
       }
