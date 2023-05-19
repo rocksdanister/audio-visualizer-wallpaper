@@ -26,10 +26,10 @@
       var fps = 24;
       var camera,
         musicLight,
-        musicLightIntensity = 50 / 2,
+        musicLightIntensity = 50 / 1,
         cameraContainer,
         isSignalNotFound = true,
-        isDebugging = true;
+        isDebugging = false;
 
       //Using two separate canvas to simplify code
       let canvasArtist = document.createElement("canvas");
@@ -129,8 +129,8 @@
         orbitalControl.enableDamping = true;
         orbitalControl.minDistance = 18;
         orbitalControl.maxDistance = 50;
-        orbitalControl.minAzimuthAngle = Math.PI * -0.5;
-        orbitalControl.maxAzimuthAngle = Math.PI * 0.5;
+        //orbitalControl.minAzimuthAngle = Math.PI * -0.5;
+        //orbitalControl.maxAzimuthAngle = Math.PI * 0.5;
         orbitalControl.target.set(0, 0, -0.1);
         orbitalControl.enabled = isDebugging;
         //orbitalControl.autoRotate = true;
@@ -363,6 +363,12 @@
         document.fonts.add(font);
       });
 
+      window.onload = () => {
+        if (isDebugging) {
+          photoImg.src = "photos//jellyfish.jpg";
+        }
+      };
+
       function livelyPropertyListener(name, val) {
         switch (name) {
           case "imgSelect":
@@ -391,12 +397,6 @@
         }
       }
 
-      window.onload = () => {
-        if (isDebugging) {
-          photoImg.src = "photos//jellyfish.jpg";
-        }
-      };
-
       photoImg.onload = () => {
         ctxPhoto.clearRect(0, 0, canvasPhoto.width, canvasPhoto.height);
 
@@ -409,66 +409,6 @@
         ctxPhoto.fillStyle = gradient;
         ctxPhoto.fillRect(0, 0, canvasPhoto.width, canvasPhoto.height);
       };
-
-      //ref: https://stackoverflow.com/questions/21961839/simulation-background-size-cover-in-canvas
-      function drawImageProp(ctx, img, x, y, w, h, offsetX, offsetY) {
-        if (arguments.length === 2) {
-          x = y = 0;
-          w = ctx.canvas.width;
-          h = ctx.canvas.height;
-        }
-
-        // default offset is center
-        offsetX = typeof offsetX === "number" ? offsetX : 0.5;
-        offsetY = typeof offsetY === "number" ? offsetY : 0.5;
-
-        // keep bounds [0.0, 1.0]
-        if (offsetX < 0) offsetX = 0;
-        if (offsetY < 0) offsetY = 0;
-        if (offsetX > 1) offsetX = 1;
-        if (offsetY > 1) offsetY = 1;
-
-        var iw = img.width,
-          ih = img.height,
-          r = Math.min(w / iw, h / ih),
-          nw = iw * r, // new prop. width
-          nh = ih * r, // new prop. height
-          cx,
-          cy,
-          cw,
-          ch,
-          ar = 1;
-
-        // decide which gap to fill
-        if (Math.round(nw) < w) ar = w / nw;
-        if (Math.abs(ar - 1) < 1e-14 && Math.round(nh) < h) ar = h / nh; // updated
-        nw *= ar;
-        nh *= ar;
-
-        // calc source rectangle
-        cw = iw / (nw / w);
-        ch = ih / (nh / h);
-
-        cx = (iw - cw) * offsetX;
-        cy = (ih - ch) * offsetY;
-
-        // make sure source rectangle is valid
-        if (cx < 0) cx = 0;
-        if (cy < 0) cy = 0;
-        if (cw > iw) cw = iw;
-        if (ch > ih) ch = ih;
-
-        ctx.drawImage(img, cx, cy, cw, ch, x, y, w, h);
-      }
-
-      //ref: https://stackoverflow.com/questions/17411991/html5-canvas-rotate-image
-      // x,y position of image center
-      function drawImage(ctx, image, x, y, scaleX, scaleY, degree) {
-        ctx.setTransform(scaleX, 0, 0, scaleY, x, y);
-        ctx.rotate((degree * Math.PI) / 180);
-        ctx.drawImage(image, -image.width / 2, -image.height / 2);
-        ctx.resetTransform();
-      }
 
       let songTitle = "",
         songArtist = "",
@@ -535,6 +475,23 @@
         document.body.style.setProperty("--gradientColor1", `rgb(${albumColor.toString()}`);
       };
 
+      function setMouseParallax() {
+        this.onmousemove = mouseMove;
+        function mouseMove(event) {
+          if (cameraContainer == null) return;
+
+          const x = ((Math.PI / 180) * (window.innerWidth - event.pageX * 1)) / 90;
+          const y = ((Math.PI / 180) * (window.innerHeight - event.pageY * 1)) / 90;
+
+          cameraContainer.rotation.x = (Math.PI / 180) * -30 - y;
+          cameraContainer.rotation.y = (Math.PI / 180) * 30 - x;
+        }
+      }
+
+      function resetMouse() {
+        this.onmousedown = null;
+      }
+
       //https://techfunda.com/howto/1077/digital-clock-animation
       let ctxClock = canvasClock.getContext("2d");
       function updateClock() {
@@ -544,7 +501,9 @@
         ctxClock.clearRect(0, 0, canvasClock.width, canvasClock.height);
         ctxClock.font = "125px digib";
         ctxClock.fillStyle = "white";
-        ctxClock.fillText(str, 10, canvasClock.height / 1.5);
+        ctxClock.textBaseline = "middle";
+        ctxClock.textAlign = "center";
+        ctxClock.fillText(str, canvasClock.width / 2, canvasClock.height / 2);
       }
 
       function getTime(hour, min, sec) {
@@ -560,6 +519,67 @@
         return curTime;
       }
       setInterval(updateClock, 1000);
+
+      //helpers
+      //ref: https://stackoverflow.com/questions/21961839/simulation-background-size-cover-in-canvas
+      function drawImageProp(ctx, img, x, y, w, h, offsetX, offsetY) {
+        if (arguments.length === 2) {
+          x = y = 0;
+          w = ctx.canvas.width;
+          h = ctx.canvas.height;
+        }
+
+        // default offset is center
+        offsetX = typeof offsetX === "number" ? offsetX : 0.5;
+        offsetY = typeof offsetY === "number" ? offsetY : 0.5;
+
+        // keep bounds [0.0, 1.0]
+        if (offsetX < 0) offsetX = 0;
+        if (offsetY < 0) offsetY = 0;
+        if (offsetX > 1) offsetX = 1;
+        if (offsetY > 1) offsetY = 1;
+
+        var iw = img.width,
+          ih = img.height,
+          r = Math.min(w / iw, h / ih),
+          nw = iw * r, // new prop. width
+          nh = ih * r, // new prop. height
+          cx,
+          cy,
+          cw,
+          ch,
+          ar = 1;
+
+        // decide which gap to fill
+        if (Math.round(nw) < w) ar = w / nw;
+        if (Math.abs(ar - 1) < 1e-14 && Math.round(nh) < h) ar = h / nh; // updated
+        nw *= ar;
+        nh *= ar;
+
+        // calc source rectangle
+        cw = iw / (nw / w);
+        ch = ih / (nh / h);
+
+        cx = (iw - cw) * offsetX;
+        cy = (ih - ch) * offsetY;
+
+        // make sure source rectangle is valid
+        if (cx < 0) cx = 0;
+        if (cy < 0) cy = 0;
+        if (cw > iw) cw = iw;
+        if (ch > ih) ch = ih;
+
+        ctx.drawImage(img, cx, cy, cw, ch, x, y, w, h);
+      }
+
+      //ref: https://stackoverflow.com/questions/17411991/html5-canvas-rotate-image
+      // x,y position of image center
+      function drawImage(ctx, image, x, y, scaleX, scaleY, degree) {
+        ctx.setTransform(scaleX, 0, 0, scaleY, x, y);
+        ctx.rotate((degree * Math.PI) / 180);
+        ctx.drawImage(image, -image.width / 2, -image.height / 2);
+        ctx.resetTransform();
+      }
     </script>
   </body>
 </html>
