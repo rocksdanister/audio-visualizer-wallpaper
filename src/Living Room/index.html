@@ -223,8 +223,6 @@
 
           canvasTextureClock = new THREE.CanvasTexture(canvasClock);
           canvasTextureClock.flipY = false;
-          //canvasTextureClock.magFilter = THREE.NearestFilter;
-          //canvasTextureClock.minFilter = THREE.NearestFilter;
           canvasTextureClock.anisotropy = 4;
           const canvasMaterialClock = new THREE.MeshBasicMaterial({ map: canvasTextureClock, transparent: false });
 
@@ -240,6 +238,9 @@
           meshBasicToStandardMesh(gltf.scene.getObjectByName("Cube003")); //table2
           meshBasicToStandardMesh(gltf.scene.getObjectByName("1001")); //guitar
           meshBasicToStandardMesh(gltf.scene.getObjectByName("1")); //plant
+
+          //Model adjustments
+          gltf.scene.getObjectByName("Wall_Frame").material.color =  new THREE.Color(0x080808);
 
           //no signal video
           let videoTexture = new THREE.VideoTexture(htmlVideo);
