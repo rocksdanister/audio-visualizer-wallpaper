@@ -26,7 +26,7 @@
       var fps = 24;
       var camera,
         musicLight,
-        musicLightIntensity = 50/2,
+        musicLightIntensity = 50 / 2,
         cameraContainer,
         isSignalNotFound = true,
         isDebugging = true;
@@ -215,6 +215,10 @@
           canvasTexturePhoto = new THREE.CanvasTexture(canvasPhoto);
           canvasTexturePhoto.encoding = THREE.sRGBEncoding;
           canvasTexturePhoto.flipY = false;
+          canvasTexturePhoto.wrapS = THREE.RepeatWrapping;
+          canvasTexturePhoto.wrapT = THREE.RepeatWrapping;
+          canvasTexturePhoto.rotation = (Math.PI / 180) * -90;
+
           const canvasMaterialPhoto = new THREE.MeshBasicMaterial({ map: canvasTexturePhoto, transparent: false });
 
           canvasTextureClock = new THREE.CanvasTexture(canvasClock);
@@ -268,12 +272,6 @@
         //post processing
         const renderPass = new RenderPass(scene, camera);
         composer.addPass(renderPass);
-
-        //const filmPass = new FilmPass(1, 0.1, 1024, 0);
-        //composer.addPass(filmPass);
-
-        //const bloomPass = new UnrealBloomPass(new THREE.Vector2(256, 256), 1, 0.2, 0.8);
-        //composer.addPass(bloomPass);
       }
 
       function meshBasicToStandardMesh(object) {
@@ -383,11 +381,10 @@
             }
             break;
           case "zoomCamera":
-            if (camera != null)
-            {
+            if (camera != null) {
               camera.zoom = val;
               camera.updateProjectionMatrix();
-            }  
+            }
           case "30fps":
             fps = val ? 24 : 60;
             break;
@@ -401,24 +398,68 @@
       };
 
       photoImg.onload = () => {
-        //TODO, better algorithm: https://stackoverflow.com/questions/21961839/simulation-background-size-cover-in-canvas
-        let scaleX = 1,
-          scaleY = 1;
-        let canvasAspect = Math.round(canvasPhoto.width / canvasPhoto.height);
-        let imgAspect = Math.round(photoImg.width / photoImg.height);
-        if (imgAspect > canvasAspect) scaleX = canvasAspect / imgAspect;
-        else scaleY = imgAspect / canvasAspect;
-
         ctxPhoto.clearRect(0, 0, canvasPhoto.width, canvasPhoto.height);
-        ctxPhoto.filter = "brightness(90%)";
-        drawImage(ctxPhoto, photoImg, canvasPhoto.width / 2, canvasPhoto.height / 2, scaleX, scaleY, -90);
 
-        var gradient = ctxPhoto.createLinearGradient(0, 0, 0, canvasPhoto.height);
-        gradient.addColorStop(0, "rgba(55,55,55,1)");
+        ctxPhoto.filter = "brightness(90%)";
+        drawImageProp(ctxPhoto, photoImg);
+
+        var gradient = ctxPhoto.createLinearGradient(canvasPhoto.width, 0, 0, 0);
+        gradient.addColorStop(0, "rgba(55,55,55,0.75)");
         gradient.addColorStop(1, "rgba(0,0,0,0)");
         ctxPhoto.fillStyle = gradient;
         ctxPhoto.fillRect(0, 0, canvasPhoto.width, canvasPhoto.height);
       };
+
+      //ref: https://stackoverflow.com/questions/21961839/simulation-background-size-cover-in-canvas
+      function drawImageProp(ctx, img, x, y, w, h, offsetX, offsetY) {
+        if (arguments.length === 2) {
+          x = y = 0;
+          w = ctx.canvas.width;
+          h = ctx.canvas.height;
+        }
+
+        // default offset is center
+        offsetX = typeof offsetX === "number" ? offsetX : 0.5;
+        offsetY = typeof offsetY === "number" ? offsetY : 0.5;
+
+        // keep bounds [0.0, 1.0]
+        if (offsetX < 0) offsetX = 0;
+        if (offsetY < 0) offsetY = 0;
+        if (offsetX > 1) offsetX = 1;
+        if (offsetY > 1) offsetY = 1;
+
+        var iw = img.width,
+          ih = img.height,
+          r = Math.min(w / iw, h / ih),
+          nw = iw * r, // new prop. width
+          nh = ih * r, // new prop. height
+          cx,
+          cy,
+          cw,
+          ch,
+          ar = 1;
+
+        // decide which gap to fill
+        if (Math.round(nw) < w) ar = w / nw;
+        if (Math.abs(ar - 1) < 1e-14 && Math.round(nh) < h) ar = h / nh; // updated
+        nw *= ar;
+        nh *= ar;
+
+        // calc source rectangle
+        cw = iw / (nw / w);
+        ch = ih / (nh / h);
+
+        cx = (iw - cw) * offsetX;
+        cy = (ih - ch) * offsetY;
+
+        // make sure source rectangle is valid
+        if (cx < 0) cx = 0;
+        if (cy < 0) cy = 0;
+        if (cw > iw) cw = iw;
+        if (ch > ih) ch = ih;
+
+        ctx.drawImage(img, cx, cy, cw, ch, x, y, w, h);
+      }
 
       //ref: https://stackoverflow.com/questions/17411991/html5-canvas-rotate-image
       // x,y position of image center
@@ -470,7 +511,9 @@
         if (audioIntensity > 1) audioIntensity = 1;
         if (audioIntensity < 0) audioIntensity = 0;
 
-        musicLight.intensity = musicLightIntensity * audioIntensity;
+        if (musicLight != null) {
+          musicLight.intensity = musicLightIntensity * audioIntensity;
+        }
       }
 
       albumImg.onload = () => {
