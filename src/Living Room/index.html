@@ -26,6 +26,7 @@
       var fps = 24;
       var camera,
         musicLight,
+        soundbarMaterial,
         musicLightIntensity = 50 / 1,
         cameraContainer,
         isSignalNotFound = true,
@@ -133,7 +134,7 @@
         //orbitalControl.maxAzimuthAngle = Math.PI * 0.5;
         orbitalControl.target.set(0, 0, -0.1);
         orbitalControl.enabled = isDebugging;
-        //orbitalControl.autoRotate = true;
+        orbitalControl.autoRotate = false;
         orbitalControl.update();
 
         //Lighting and environment
@@ -155,7 +156,7 @@
         //const helper = new THREE.DirectionalLightHelper( directionalLight, 5 );
         //scene.add( helper );
 
-        musicLight = new THREE.PointLight(0xff0000, musicLightIntensity, 5);
+        musicLight = new THREE.PointLight(0x2d2d2d, musicLightIntensity, 5);
         musicLight.position.set(0, 1.25, -3.75);
         scene.add(musicLight);
 
@@ -183,6 +184,10 @@
         // scene.add(spotLight);
         //const spotLightHelper = new THREE.SpotLightHelper(spotLight);
         //scene.add(spotLightHelper);
+
+        //Preloading material
+        soundbarMaterial = new THREE.MeshStandardMaterial();
+        soundbarMaterial.color = new THREE.Color(0x2d2d2d);
 
         //Load model
         const loader = new GLTFLoader();
@@ -241,6 +246,7 @@
 
           //Model adjustments
           gltf.scene.getObjectByName("Wall_Frame").material.color =  new THREE.Color(0x080808);
+          gltf.scene.getObjectByName("SOUNDBAR_LED").material = soundbarMaterial;
 
           //no signal video
           let videoTexture = new THREE.VideoTexture(htmlVideo);
@@ -419,6 +425,7 @@
         let obj = JSON.parse(data);
         if (obj == null) {
           isSignalNotFound = true;
+          setLightColor(45 / 255, 45 / 255, 45 / 255);
           document.body.style.setProperty("--gradientColor1", "#2d2d2d");
         } else {
           songTitle = obj.Title;
@@ -433,7 +440,7 @@
             ctxArtist.fillText(songTitle, canvasArtist.width / 2, 25 + canvasArtist.height / 2);
             albumColor = [225, 225, 225];
 
-            musicLight?.color.setHex(0x2d2d2d);
+            setLightColor(45 / 255, 45 / 255, 45 / 255);
             document.body.style.setProperty("--gradientColor1", "#2d2d2d");
           } else {
             albumImg.src = "data:image/png;base64, " + obj.Thumbnail;
@@ -443,6 +450,8 @@
 
       var lastBass = 1;
       function livelyAudioListener(audioArray) {
+        if (isSignalNotFound) return;
+        
         let bass = 0,
           audioIntensity = 1;
         for (let i = 0; i <= 40; i++) bass += audioArray[i] * 2;
@@ -472,9 +481,15 @@
         ctxArtist.filter = "none";
         ctxArtist.drawImage(albumImg, canvasArtist.width / 2 - 150, canvasArtist.height / 2 - 150, 300, 300);
 
-        musicLight?.color.setRGB(albumColor[0] / 255, albumColor[1] / 255, albumColor[2] / 255);
+        setLightColor(albumColor[0] / 255, albumColor[1] / 255, albumColor[2] / 255);
         document.body.style.setProperty("--gradientColor1", `rgb(${albumColor.toString()}`);
       };
+
+      function setLightColor(r,g,b)
+      {
+        musicLight?.color.setRGB(r, g, b);
+        soundbarMaterial?.color.setRGB(r, g, b);
+      }
 
       function setMouseParallax() {
         this.onmousemove = mouseMove;
