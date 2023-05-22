@@ -224,9 +224,9 @@
           canvasTexturePhoto = new THREE.CanvasTexture(canvasPhoto);
           canvasTexturePhoto.encoding = THREE.sRGBEncoding;
           canvasTexturePhoto.flipY = false;
-          //canvasTexturePhoto.wrapS = THREE.RepeatWrapping;
-          //canvasTexturePhoto.wrapT = THREE.RepeatWrapping;
-          //canvasTexturePhoto.rotation = (Math.PI / 180) * -90;
+          canvasTexturePhoto.wrapS = THREE.RepeatWrapping;
+          canvasTexturePhoto.wrapT = THREE.RepeatWrapping;
+          canvasTexturePhoto.rotation = (Math.PI / 180) * -90;
 
           const canvasMaterialPhoto = new THREE.MeshBasicMaterial({ map: canvasTexturePhoto, transparent: false });
           canvasMaterialPhoto.map.offset.set(-0.003, 0); //hide repeat artifact
