@@ -1,0 +1,17 @@
+{
+  "AppVersion": "2.0.6.0",
+  "Title": "Living Room",
+  "Thumbnail": "5hhxt0u4.jpg",
+  "Preview": "2mlhvoxr.gif",
+  "Desc": "A lively room with music, visualizer and more!",
+  "Author": "rocksdanister",
+  "License": "MIT",
+  "Contact": "https://github.com/rocksdanister/audio-visualizer-wallpaper",
+  "Type": 1,
+  "FileName": "index.html",
+  "Arguments": "--system-nowplaying --audio",
+  "IsAbsolutePath": false,
+  "Id": null,
+  "Tags": null,
+  "Version": 0
+}
