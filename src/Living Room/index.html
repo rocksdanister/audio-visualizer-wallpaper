@@ -29,7 +29,7 @@
         soundbarMaterial,
         musicLightIntensity = 50 / 1,
         cameraContainer,
-        isSignalNotFound = true,
+        isSignalNotFound,
         isDebugging = false;
 
       //Using two separate canvas to simplify code
@@ -134,7 +134,7 @@
         //orbitalControl.maxAzimuthAngle = Math.PI * 0.5;
         orbitalControl.target.set(0, 0, -0.1);
         orbitalControl.enabled = isDebugging;
-        orbitalControl.autoRotate = false;
+        //orbitalControl.autoRotate = false;
         orbitalControl.update();
 
         //Lighting and environment
@@ -142,8 +142,12 @@
         //RectAreaLightUniformsLib.init();
         //scene.background = new THREE.Color(0x000000);
         //scene.background = new THREE.TextureLoader().load( "textures/background.png" );
-        scene.environment = new RGBELoader().load("textures/industrial_sunset_puresky_1k.hdr");
-        scene.environment.mapping = THREE.EquirectangularReflectionMapping;
+        //scene.environment = new RGBELoader().load("textures/industrial_sunset_puresky_1k.hdr");
+        //scene.environment.mapping = THREE.EquirectangularReflectionMapping;
+
+        //Lighting is baked in blender, environment map not needed
+        const ambientLight = new THREE.AmbientLight( 0xffffff, 1 );
+        scene.add( ambientLight );
 
         // const spotLightRoom = new THREE.SpotLight(0xffffff, 1);
         // spotLightRoom.position.set(-10, 75, 0);
@@ -153,8 +157,8 @@
         // directionalLight.position.set(0, 5, 5);
         // directionalLight.castShadow = false;
         // scene.add(directionalLight);
-        //const helper = new THREE.DirectionalLightHelper( directionalLight, 5 );
-        //scene.add( helper );
+        // const helper = new THREE.DirectionalLightHelper( directionalLight, 5 );
+        // scene.add( helper );
 
         musicLight = new THREE.PointLight(0x2d2d2d, musicLightIntensity, 5);
         musicLight.position.set(0, 1.25, -3.75);
@@ -191,7 +195,7 @@
 
         //Load model
         const loader = new GLTFLoader();
-        loader.load("models/Room 2.1.glb", function (gltf) {
+        loader.load("models/Room.glb", function (gltf) {
           const planeGeometry = new THREE.PlaneGeometry(25, 25);
           const bottomPlane = new THREE.Mesh(
             planeGeometry,
@@ -206,10 +210,10 @@
 
           gltf.scene.position.set(0, -2.5, 0);
 
-          // gltf.scene.traverse(function (child) {
-          //   if (child.isMesh) child.castShadow = true;
-          //   //console.log(child);
-          // });
+          gltf.scene.traverse(function (child) {
+            //if (child.isMesh) child.castShadow = true;
+            console.log(child);
+          });
           gltf.scene.getObjectByName("Room").castShadow = true;
 
           canvasTextureArtist = new THREE.CanvasTexture(canvasArtist);
@@ -220,33 +224,36 @@
           canvasTexturePhoto = new THREE.CanvasTexture(canvasPhoto);
           canvasTexturePhoto.encoding = THREE.sRGBEncoding;
           canvasTexturePhoto.flipY = false;
-          canvasTexturePhoto.wrapS = THREE.RepeatWrapping;
-          canvasTexturePhoto.wrapT = THREE.RepeatWrapping;
-          canvasTexturePhoto.rotation = (Math.PI / 180) * -90;
+          //canvasTexturePhoto.wrapS = THREE.RepeatWrapping;
+          //canvasTexturePhoto.wrapT = THREE.RepeatWrapping;
+          //canvasTexturePhoto.rotation = (Math.PI / 180) * -90;
 
           const canvasMaterialPhoto = new THREE.MeshBasicMaterial({ map: canvasTexturePhoto, transparent: false });
+          canvasMaterialPhoto.map.offset.set(-0.003, 0); //hide repeat artifact
 
           canvasTextureClock = new THREE.CanvasTexture(canvasClock);
           canvasTextureClock.flipY = false;
           canvasTextureClock.anisotropy = 4;
           const canvasMaterialClock = new THREE.MeshBasicMaterial({ map: canvasTextureClock, transparent: false });
 
-          //model objects
+          //Model objects
           let screenArtist = gltf.scene.getObjectByName("TV_SCREEN");
           let screenClock = gltf.scene.getObjectByName("CLOCK_SCREEN");
           let screenPhoto = gltf.scene.getObjectByName("PICTURE_FRAME");
 
+          //Model adjustments
           //Baked texture is MeshBasic otherwise (no real-time lighting.)
           meshBasicToStandardMesh(gltf.scene.getObjectByName("Room"));
           meshBasicToStandardMesh(gltf.scene.getObjectByName("Tv_Cabinet"));
           meshBasicToStandardMesh(gltf.scene.getObjectByName("Sofa"));
           meshBasicToStandardMesh(gltf.scene.getObjectByName("Cube003")); //table2
+          meshBasicToStandardMesh(gltf.scene.getObjectByName("Book4009")); //books
+          meshBasicToStandardMesh(gltf.scene.getObjectByName("Cube001")); //dvd
           meshBasicToStandardMesh(gltf.scene.getObjectByName("1001")); //guitar
           meshBasicToStandardMesh(gltf.scene.getObjectByName("1")); //plant
-
-          //Model adjustments
           gltf.scene.getObjectByName("Wall_Frame").material.color =  new THREE.Color(0x080808);
           gltf.scene.getObjectByName("SOUNDBAR_LED").material = soundbarMaterial;
+          gltf.scene.getObjectByName("Cube001").material.map.offset.set(-0.03, 0)
 
           //no signal video
           let videoTexture = new THREE.VideoTexture(htmlVideo);
@@ -372,6 +379,7 @@
 
       window.onload = () => {
         if (isDebugging) {
+          isSignalNotFound = true;
           photoImg.src = "photos//jellyfish.jpg";
         }
       };
@@ -451,7 +459,7 @@
       var lastBass = 1;
       function livelyAudioListener(audioArray) {
         if (isSignalNotFound) return;
-        
+
         let bass = 0,
           audioIntensity = 1;
         for (let i = 0; i <= 40; i++) bass += audioArray[i] * 2;
